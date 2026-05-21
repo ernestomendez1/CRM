@@ -5,6 +5,7 @@ import { SidebarNav } from '@/components/shell/sidebar-nav';
 import { LocaleSwitcher } from '@/components/shell/locale-switcher';
 import { UserMenu } from '@/components/shell/user-menu';
 import { MobileNav } from '@/components/shell/mobile-nav';
+import { AssistantWidget } from '@/components/assistant/assistant-widget';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireBusiness();
@@ -37,6 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
       </div>
+      <AssistantWidget />
     </div>
   );
 }

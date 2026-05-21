@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireBusiness, type CurrentContext } from '@/lib/auth/session';
+import { createExpenseRecord } from '@/lib/domain/expenses';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { expenseSchema, type ExpenseInput } from '@/lib/validation/expense';
@@ -86,31 +87,21 @@ export async function createExpense(
   const upload = await uploadReceiptIfPresent(formData, ctx);
   if ('error' in upload) return { ok: false, error: upload.error };
 
-  const supabase = await createClient();
-  const total = parsed.subtotal + parsed.tax_amount;
-
-  const { data, error } = await supabase
-    .from('expenses')
-    .insert({
-      ...parsed,
-      business_id: ctx.businessId,
-      total,
-      receipt_file_url: upload.path ? publicLikePath(upload.path) : null,
-      created_by: ctx.userId,
-    })
-    .select('id')
-    .single();
-
-  if (error) {
+  let created: { id: string };
+  try {
+    created = await createExpenseRecord(ctx, parsed, {
+      receiptFileUrl: upload.path ? publicLikePath(upload.path) : null,
+    });
+  } catch (error) {
     if (upload.path) {
       const admin = createServiceClient();
       await admin.storage.from(RECEIPT_BUCKET).remove([upload.path]);
     }
-    return { ok: false, error: error.message };
+    return { ok: false, error: error instanceof Error ? error.message : 'Failed to create expense.' };
   }
 
   revalidatePath('/expenses');
-  redirect(`/expenses/${(data as { id: string }).id}`);
+  redirect(`/expenses/${created.id}`);
 }
 
 export async function updateExpense(

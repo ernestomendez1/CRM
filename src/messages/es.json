@@ -37,6 +37,36 @@
     "invalidCredentials": "Correo o contraseña inválidos.",
     "signedOut": "Sesión cerrada."
   },
+  "assistant": {
+    "launcher": "Asistente",
+    "title": "Asistente CRM",
+    "subtitle": "Busque registros o prepare productos, clientes y gastos desde el chat.",
+    "assistantLabel": "Asistente",
+    "open": "Abrir asistente",
+    "close": "Cerrar asistente",
+    "emptyTitle": "Empiece con un comando directo",
+    "emptyBody": "Pruebe “Crear un producto llamado Adobe Creative Cloud, precio 42.55 DOP, gravado” o “Buscar cliente Acme”.",
+    "placeholder": "Pregúntele al asistente del CRM…",
+    "send": "Enviar",
+    "thinking": "Pensando…",
+    "reviewTitle": "Revise antes de confirmar",
+    "confirmAction": "Confirmar",
+    "cancelAction": "Cancelar",
+    "warnings": "Advertencias",
+    "pendingReminder": "Todavía hay una acción pendiente esperando confirmación.",
+    "scopeHint": "La primera fase admite búsqueda y creación de productos, clientes y gastos.",
+    "cancelled": "De acuerdo, no hice ningún cambio.",
+    "viewRecord": "Abrir {label}",
+    "statuses": {
+      "pending": "Pendiente",
+      "cancelled": "Cancelada",
+      "executed": "Creado"
+    },
+    "errors": {
+      "network": "No se pudo completar la solicitud al asistente. Inténtelo de nuevo.",
+      "execution": "El asistente no pudo completar esa acción."
+    }
+  },
   "dashboard": {
     "title": "Panel",
     "welcome": "Bienvenido de nuevo",
@@ -77,7 +107,8 @@
       "fiscalReceiptNumber": "NCF",
       "paymentMethod": "Método de pago",
       "receipt": "Comprobante",
-      "receiptHint": "PNG, JPG, WebP, HEIC o PDF. Máx 10 MB."
+      "receiptHint": "PNG, JPG, WebP, HEIC o PDF. Máx 10 MB.",
+      "receiptAiHint": "El autollenado con IA admite PNG, JPG, WebP y PDF. Los archivos HEIC todavía se pueden guardar manualmente."
     },
     "paymentMethods": {
       "cash": "Efectivo",
@@ -85,6 +116,26 @@
       "card": "Tarjeta",
       "credit": "Crédito",
       "other": "Otro"
+    },
+    "extraction": {
+      "analyzing": "Analizando comprobante…",
+      "ready": "Comprobante analizado.",
+      "reviewBeforeSave": "Revise los valores extraídos antes de guardar.",
+      "warnings": {
+        "vendor_name_missing": "No se pudo leer el nombre del suplidor. Complételo manualmente.",
+        "expense_date_missing": "No se pudo leer la fecha del gasto. Revise la fecha.",
+        "subtotal_missing": "No se pudo leer el subtotal. Ingréselo manualmente.",
+        "tax_missing_set_zero": "No se encontró el ITBIS, así que se estableció en 0.",
+        "currency_defaulted": "La moneda no se veía claramente, así que se usó la moneda por defecto del negocio.",
+        "fiscal_receipt_inferred_from_number": "Se detectó un NCF, por lo que se marcó que tiene comprobante fiscal."
+      },
+      "errors": {
+        "unsupportedType": "La extracción con IA actualmente admite PNG, JPG, WebP y PDF. Los archivos HEIC todavía se pueden guardar manualmente.",
+        "invalidFile": "Seleccione un comprobante válido para analizar.",
+        "unavailable": "La extracción de comprobantes con IA todavía no está configurada.",
+        "quota": "La extracción con IA no está disponible ahora mismo porque la cuenta de OpenAI no tiene cuota restante o no tiene facturación habilitada.",
+        "failed": "No se pudo leer este comprobante automáticamente. Aún puede completar el formulario manualmente."
+      }
     },
     "created": "Gasto registrado.",
     "saved": "Gasto guardado.",

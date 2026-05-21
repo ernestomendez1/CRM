@@ -37,6 +37,36 @@
     "invalidCredentials": "Invalid email or password.",
     "signedOut": "You have been signed out."
   },
+  "assistant": {
+    "launcher": "Assistant",
+    "title": "CRM Assistant",
+    "subtitle": "Search records or prepare products, customers, and expenses from chat.",
+    "assistantLabel": "Assistant",
+    "open": "Open assistant",
+    "close": "Close assistant",
+    "emptyTitle": "Start with a direct command",
+    "emptyBody": "Try “Create a product named Adobe Creative Cloud, price 42.55 DOP, taxable” or “Find customer Acme”.",
+    "placeholder": "Ask the CRM assistant…",
+    "send": "Send",
+    "thinking": "Thinking…",
+    "reviewTitle": "Review before confirm",
+    "confirmAction": "Confirm",
+    "cancelAction": "Cancel",
+    "warnings": "Warnings",
+    "pendingReminder": "There is still a pending action waiting for confirmation.",
+    "scopeHint": "Phase one supports product, customer, and expense search plus create flows.",
+    "cancelled": "Okay, I did not make any changes.",
+    "viewRecord": "Open {label}",
+    "statuses": {
+      "pending": "Pending",
+      "cancelled": "Cancelled",
+      "executed": "Created"
+    },
+    "errors": {
+      "network": "The assistant request could not be completed. Please try again.",
+      "execution": "The assistant could not complete that action."
+    }
+  },
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Welcome back",
@@ -77,7 +107,8 @@
       "fiscalReceiptNumber": "NCF",
       "paymentMethod": "Payment method",
       "receipt": "Receipt file",
-      "receiptHint": "PNG, JPG, WebP, HEIC, or PDF. Max 10 MB."
+      "receiptHint": "PNG, JPG, WebP, HEIC, or PDF. Max 10 MB.",
+      "receiptAiHint": "AI prefill supports PNG, JPG, WebP, and PDF. HEIC files can still be saved manually."
     },
     "paymentMethods": {
       "cash": "Cash",
@@ -85,6 +116,26 @@
       "card": "Card",
       "credit": "Credit",
       "other": "Other"
+    },
+    "extraction": {
+      "analyzing": "Analyzing receipt…",
+      "ready": "Receipt analyzed.",
+      "reviewBeforeSave": "Review the extracted values before saving.",
+      "warnings": {
+        "vendor_name_missing": "Vendor name could not be read. Please fill it in manually.",
+        "expense_date_missing": "Expense date could not be read. Please review the date.",
+        "subtotal_missing": "Subtotal could not be read. Please enter it manually.",
+        "tax_missing_set_zero": "Tax amount was not found, so it was set to 0.",
+        "currency_defaulted": "Currency was not clearly shown, so the business default was used.",
+        "fiscal_receipt_inferred_from_number": "A fiscal receipt number was detected, so fiscal receipt was marked as yes."
+      },
+      "errors": {
+        "unsupportedType": "AI extraction currently supports PNG, JPG, WebP, and PDF. You can still save HEIC files manually.",
+        "invalidFile": "Select a valid receipt file to analyze.",
+        "unavailable": "AI receipt extraction is not configured yet.",
+        "quota": "OpenAI receipt extraction is currently unavailable because the API account has no remaining quota or billing is not enabled.",
+        "failed": "This receipt could not be read automatically. You can still complete the form manually."
+      }
     },
     "created": "Expense recorded.",
     "saved": "Expense saved.",

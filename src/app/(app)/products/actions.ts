@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireBusiness } from '@/lib/auth/session';
+import { createProductRecord } from '@/lib/domain/products';
 import { createClient } from '@/lib/supabase/server';
 import { productSchema, type ProductInput } from '@/lib/validation/product';
 
@@ -45,21 +46,15 @@ export async function createProduct(
   const result = parseInput(formData);
   if ('_error' in result) return result._error;
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('products')
-    .insert({
-      ...result,
-      business_id: ctx.businessId,
-      created_by: ctx.userId,
-    })
-    .select('id')
-    .single();
-
-  if (error) return { ok: false, error: error.message };
+  let created: { id: string };
+  try {
+    created = await createProductRecord(ctx, result);
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Failed to create product.' };
+  }
 
   revalidatePath('/products');
-  redirect(`/products/${(data as { id: string }).id}`);
+  redirect(`/products/${created.id}`);
 }
 
 export async function updateProduct(
