@@ -1,0 +1,352 @@
+{
+  "common": {
+    "appName": "CRM",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "new": "Nuevo",
+    "search": "Buscar",
+    "loading": "Cargando…",
+    "back": "Volver",
+    "actions": "Acciones",
+    "yes": "Sí",
+    "no": "No",
+    "confirm": "Confirmar",
+    "language": "Idioma",
+    "signOut": "Cerrar sesión"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "customers": "Clientes",
+    "products": "Productos",
+    "quotations": "Cotizaciones",
+    "invoices": "Facturas",
+    "expenses": "Gastos",
+    "reports": "Reportes",
+    "settings": "Configuración"
+  },
+  "auth": {
+    "signIn": "Iniciar sesión",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "signInButton": "Iniciar sesión",
+    "magicLink": "Enviar enlace mágico",
+    "magicLinkSent": "Revise su correo para el enlace mágico.",
+    "invalidCredentials": "Correo o contraseña inválidos.",
+    "signedOut": "Sesión cerrada."
+  },
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "Bienvenido de nuevo",
+    "monthlyIncome": "Ingresos del mes",
+    "monthlyExpenses": "Gastos del mes",
+    "accountsReceivable": "Cuentas por cobrar",
+    "netProfit": "Beneficio neto"
+  },
+  "expenses": {
+    "title": "Gastos",
+    "newExpense": "Nuevo gasto",
+    "editExpense": "Editar gasto",
+    "noExpenses": "Aún no se han registrado gastos.",
+    "searchPlaceholder": "Buscar por suplidor o NCF",
+    "filterFiscal": "Comprobante fiscal",
+    "filterCategory": "Categoría",
+    "anyFiscal": "Cualquiera",
+    "withFiscal": "Con NCF",
+    "withoutFiscal": "Sin NCF",
+    "anyCategory": "Cualquier categoría",
+    "from": "Desde",
+    "to": "Hasta",
+    "viewReceipt": "Ver comprobante",
+    "removeReceipt": "Quitar comprobante",
+    "removeReceiptConfirm": "¿Quitar el comprobante adjunto?",
+    "deleteConfirm": "¿Eliminar este gasto?",
+    "fields": {
+      "vendorName": "Suplidor",
+      "vendorTaxId": "RNC del suplidor",
+      "expenseDate": "Fecha",
+      "category": "Categoría",
+      "description": "Descripción",
+      "subtotal": "Subtotal",
+      "taxAmount": "ITBIS",
+      "total": "Total",
+      "currency": "Moneda",
+      "hasFiscalReceipt": "Tiene NCF",
+      "fiscalReceiptNumber": "NCF",
+      "paymentMethod": "Método de pago",
+      "receipt": "Comprobante",
+      "receiptHint": "PNG, JPG, WebP, HEIC o PDF. Máx 10 MB."
+    },
+    "paymentMethods": {
+      "cash": "Efectivo",
+      "transfer": "Transferencia",
+      "card": "Tarjeta",
+      "credit": "Crédito",
+      "other": "Otro"
+    },
+    "created": "Gasto registrado.",
+    "saved": "Gasto guardado.",
+    "deleted": "Gasto eliminado.",
+    "receiptUploaded": "Comprobante cargado.",
+    "receiptRemoved": "Comprobante eliminado."
+  },
+  "invoices": {
+    "title": "Facturas",
+    "newInvoice": "Nueva factura",
+    "editInvoice": "Editar factura",
+    "noInvoices": "Aún no hay facturas.",
+    "searchPlaceholder": "Buscar por número o cliente",
+    "filterStatus": "Estado",
+    "allStatuses": "Todos los estados",
+    "downloadPdf": "Descargar PDF",
+    "sourceQuotation": "Desde cotización #{number}",
+    "viewQuotation": "Ver cotización",
+    "fields": {
+      "invoiceNumber": "Número",
+      "customer": "Cliente",
+      "issueDate": "Fecha de emisión",
+      "dueDate": "Fecha de vencimiento",
+      "notes": "Notas",
+      "terms": "Términos",
+      "status": "Estado",
+      "currency": "Moneda",
+      "amountPaid": "Pagado",
+      "balanceDue": "Saldo pendiente"
+    },
+    "status": {
+      "draft": "Borrador",
+      "issued": "Emitida",
+      "partially_paid": "Pago parcial",
+      "paid": "Pagada",
+      "overdue": "Vencida",
+      "cancelled": "Cancelada"
+    },
+    "actions": {
+      "issue": "Emitir",
+      "cancel": "Cancelar",
+      "backToDraft": "Volver a borrador"
+    },
+    "issueConfirm": "¿Emitir esta factura? No se puede editar después.",
+    "cancelConfirm": "¿Cancelar esta factura?",
+    "deleteConfirm": "¿Eliminar este borrador de factura?",
+    "created": "Factura creada.",
+    "saved": "Factura guardada.",
+    "deleted": "Factura eliminada."
+  },
+  "payments": {
+    "title": "Pagos",
+    "addPayment": "Registrar pago",
+    "noPayments": "Aún no hay pagos.",
+    "fields": {
+      "date": "Fecha",
+      "amount": "Monto",
+      "method": "Método",
+      "reference": "Referencia",
+      "notes": "Notas"
+    },
+    "methods": {
+      "cash": "Efectivo",
+      "transfer": "Transferencia",
+      "check": "Cheque",
+      "card": "Tarjeta",
+      "other": "Otro"
+    },
+    "deleteConfirm": "¿Quitar este pago?",
+    "added": "Pago registrado.",
+    "removed": "Pago eliminado."
+  },
+  "settings": {
+    "title": "Configuración",
+    "tabs": {
+      "profile": "Perfil del negocio",
+      "tax": "Impuestos y moneda",
+      "numbering": "Numeración",
+      "pdf": "Plantilla PDF"
+    },
+    "saved": "Configuración guardada.",
+    "logoUploaded": "Logo actualizado.",
+    "logoRemoved": "Logo eliminado.",
+    "profile": {
+      "title": "Perfil del negocio",
+      "description": "Estos datos aparecen en cotizaciones, facturas y la cabecera de los PDFs.",
+      "fields": {
+        "name": "Nombre comercial",
+        "legalName": "Razón social",
+        "taxId": "RNC",
+        "email": "Correo electrónico",
+        "phone": "Teléfono",
+        "address": "Dirección",
+        "city": "Ciudad",
+        "country": "País",
+        "logo": "Logo"
+      },
+      "logoUpload": "Subir logo",
+      "logoRemove": "Quitar",
+      "logoHint": "PNG, JPG, WebP o SVG. Máx 1 MB."
+    },
+    "tax": {
+      "title": "Impuestos y moneda",
+      "description": "Tasa de impuesto y moneda por defecto para nuevas cotizaciones y facturas.",
+      "fields": {
+        "currency": "Moneda por defecto",
+        "defaultTaxRate": "Tasa de ITBIS por defecto",
+        "paymentTerms": "Plazo de pago por defecto (días)"
+      }
+    },
+    "numbering": {
+      "title": "Numeración",
+      "description": "Prefijo y próximo número secuencial. Los contadores no se pueden retroceder.",
+      "fields": {
+        "invoicePrefix": "Prefijo de factura",
+        "invoiceNext": "Próximo número de factura",
+        "quotationPrefix": "Prefijo de cotización",
+        "quotationNext": "Próximo número de cotización"
+      }
+    },
+    "pdf": {
+      "title": "Plantilla PDF",
+      "description": "Marca y estilo para los PDFs generados.",
+      "fields": {
+        "primaryColor": "Color principal",
+        "footerText": "Texto del pie",
+        "showLogo": "Mostrar logo en PDFs"
+      }
+    }
+  },
+  "quotations": {
+    "title": "Cotizaciones",
+    "newQuotation": "Nueva cotización",
+    "editQuotation": "Editar cotización",
+    "noQuotations": "Aún no hay cotizaciones.",
+    "searchPlaceholder": "Buscar por número o cliente",
+    "filterStatus": "Estado",
+    "allStatuses": "Todos los estados",
+    "downloadPdf": "Descargar PDF",
+    "convertToInvoice": "Convertir en factura",
+    "convertConfirm": "¿Convertir esta cotización en factura?",
+    "convertSuccess": "Factura creada.",
+    "alreadyConverted": "Ya convertida a la factura #{number}.",
+    "viewInvoice": "Ver factura",
+    "fields": {
+      "quotationNumber": "Número",
+      "customer": "Cliente",
+      "issueDate": "Fecha de emisión",
+      "expiryDate": "Fecha de vencimiento",
+      "notes": "Notas",
+      "terms": "Términos",
+      "status": "Estado",
+      "currency": "Moneda"
+    },
+    "lineItems": {
+      "title": "Ítems",
+      "addRow": "Agregar fila",
+      "product": "Producto",
+      "description": "Descripción",
+      "quantity": "Cant.",
+      "unitPrice": "Precio unit.",
+      "discount": "Desc. %",
+      "taxRate": "ITBIS %",
+      "lineTotal": "Total",
+      "remove": "Quitar",
+      "subtotal": "Subtotal",
+      "discountTotal": "Descuentos",
+      "taxTotal": "ITBIS",
+      "total": "Total"
+    },
+    "status": {
+      "draft": "Borrador",
+      "sent": "Enviada",
+      "accepted": "Aceptada",
+      "rejected": "Rechazada",
+      "expired": "Expirada"
+    },
+    "actions": {
+      "markSent": "Marcar como enviada",
+      "markAccepted": "Marcar como aceptada",
+      "markRejected": "Marcar como rechazada",
+      "markExpired": "Marcar como expirada",
+      "backToDraft": "Volver a borrador"
+    },
+    "created": "Cotización creada.",
+    "saved": "Cotización guardada.",
+    "deleted": "Cotización eliminada."
+  },
+  "products": {
+    "title": "Productos y servicios",
+    "newProduct": "Nuevo ítem",
+    "editProduct": "Editar ítem",
+    "noProducts": "Aún no hay productos ni servicios. Crea el primero.",
+    "searchPlaceholder": "Buscar por nombre o SKU",
+    "showInactive": "Mostrar inactivos",
+    "fields": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "unitPrice": "Precio unitario",
+      "type": "Tipo",
+      "isTaxable": "Sujeto a ITBIS",
+      "taxRateOverride": "Tasa de impuesto",
+      "taxRateOverrideHelp": "Opcional. Usa la tasa por defecto del negocio si está vacío.",
+      "sku": "SKU",
+      "isActive": "Activo"
+    },
+    "types": {
+      "product": "Producto",
+      "service": "Servicio"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "delete": {
+      "confirm": "¿Desactivar este ítem? No aparecerá en nuevas cotizaciones ni facturas.",
+      "success": "Ítem desactivado.",
+      "restoreSuccess": "Ítem reactivado."
+    }
+  },
+  "customers": {
+    "title": "Clientes",
+    "newCustomer": "Nuevo cliente",
+    "editCustomer": "Editar cliente",
+    "noCustomers": "Aún no hay clientes. Crea el primero.",
+    "searchPlaceholder": "Buscar por nombre, empresa o RNC/Cédula",
+    "showInactive": "Mostrar inactivos",
+    "fields": {
+      "name": "Nombre",
+      "companyName": "Empresa",
+      "taxIdType": "Tipo de documento",
+      "taxId": "Documento fiscal",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "address": "Dirección",
+      "city": "Ciudad",
+      "country": "País",
+      "notes": "Notas",
+      "isActive": "Activo"
+    },
+    "taxIdTypes": {
+      "rnc": "RNC",
+      "cedula": "Cédula",
+      "passport": "Pasaporte",
+      "other": "Otro"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "tabs": {
+      "overview": "Resumen",
+      "quotations": "Cotizaciones",
+      "invoices": "Facturas",
+      "payments": "Pagos"
+    },
+    "delete": {
+      "confirm": "¿Desactivar este cliente? No aparecerá en nuevas cotizaciones ni facturas.",
+      "success": "Cliente desactivado.",
+      "restoreSuccess": "Cliente reactivado."
+    },
+    "saved": "Cliente guardado.",
+    "created": "Cliente creado."
+  }
+}

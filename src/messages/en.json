@@ -1,0 +1,352 @@
+{
+  "common": {
+    "appName": "CRM",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "new": "New",
+    "search": "Search",
+    "loading": "Loading…",
+    "back": "Back",
+    "actions": "Actions",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "language": "Language",
+    "signOut": "Sign out"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "customers": "Customers",
+    "products": "Products",
+    "quotations": "Quotations",
+    "invoices": "Invoices",
+    "expenses": "Expenses",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "signInButton": "Sign in",
+    "magicLink": "Send magic link",
+    "magicLinkSent": "Check your email for the magic link.",
+    "invalidCredentials": "Invalid email or password.",
+    "signedOut": "You have been signed out."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "monthlyIncome": "Monthly Income",
+    "monthlyExpenses": "Monthly Expenses",
+    "accountsReceivable": "Accounts Receivable",
+    "netProfit": "Net Profit"
+  },
+  "expenses": {
+    "title": "Expenses",
+    "newExpense": "New expense",
+    "editExpense": "Edit expense",
+    "noExpenses": "No expenses recorded yet.",
+    "searchPlaceholder": "Search by vendor or NCF",
+    "filterFiscal": "Fiscal receipt",
+    "filterCategory": "Category",
+    "anyFiscal": "Any",
+    "withFiscal": "With fiscal receipt",
+    "withoutFiscal": "Without fiscal receipt",
+    "anyCategory": "Any category",
+    "from": "From",
+    "to": "To",
+    "viewReceipt": "View receipt",
+    "removeReceipt": "Remove receipt",
+    "removeReceiptConfirm": "Remove the attached receipt?",
+    "deleteConfirm": "Delete this expense?",
+    "fields": {
+      "vendorName": "Vendor",
+      "vendorTaxId": "Vendor RNC",
+      "expenseDate": "Date",
+      "category": "Category",
+      "description": "Description",
+      "subtotal": "Subtotal",
+      "taxAmount": "ITBIS",
+      "total": "Total",
+      "currency": "Currency",
+      "hasFiscalReceipt": "Has fiscal receipt (NCF)",
+      "fiscalReceiptNumber": "NCF",
+      "paymentMethod": "Payment method",
+      "receipt": "Receipt file",
+      "receiptHint": "PNG, JPG, WebP, HEIC, or PDF. Max 10 MB."
+    },
+    "paymentMethods": {
+      "cash": "Cash",
+      "transfer": "Bank transfer",
+      "card": "Card",
+      "credit": "Credit",
+      "other": "Other"
+    },
+    "created": "Expense recorded.",
+    "saved": "Expense saved.",
+    "deleted": "Expense deleted.",
+    "receiptUploaded": "Receipt uploaded.",
+    "receiptRemoved": "Receipt removed."
+  },
+  "invoices": {
+    "title": "Invoices",
+    "newInvoice": "New invoice",
+    "editInvoice": "Edit invoice",
+    "noInvoices": "No invoices yet.",
+    "searchPlaceholder": "Search by number or customer",
+    "filterStatus": "Status",
+    "allStatuses": "All statuses",
+    "downloadPdf": "Download PDF",
+    "sourceQuotation": "From quotation #{number}",
+    "viewQuotation": "View quotation",
+    "fields": {
+      "invoiceNumber": "Number",
+      "customer": "Customer",
+      "issueDate": "Issue date",
+      "dueDate": "Due date",
+      "notes": "Notes",
+      "terms": "Terms",
+      "status": "Status",
+      "currency": "Currency",
+      "amountPaid": "Paid",
+      "balanceDue": "Balance due"
+    },
+    "status": {
+      "draft": "Draft",
+      "issued": "Issued",
+      "partially_paid": "Partially paid",
+      "paid": "Paid",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled"
+    },
+    "actions": {
+      "issue": "Issue",
+      "cancel": "Cancel",
+      "backToDraft": "Back to draft"
+    },
+    "issueConfirm": "Issue this invoice? It cannot be edited after issuing.",
+    "cancelConfirm": "Cancel this invoice?",
+    "deleteConfirm": "Delete this draft invoice?",
+    "created": "Invoice created.",
+    "saved": "Invoice saved.",
+    "deleted": "Invoice deleted."
+  },
+  "payments": {
+    "title": "Payments",
+    "addPayment": "Register payment",
+    "noPayments": "No payments yet.",
+    "fields": {
+      "date": "Date",
+      "amount": "Amount",
+      "method": "Method",
+      "reference": "Reference",
+      "notes": "Notes"
+    },
+    "methods": {
+      "cash": "Cash",
+      "transfer": "Bank transfer",
+      "check": "Check",
+      "card": "Card",
+      "other": "Other"
+    },
+    "deleteConfirm": "Remove this payment?",
+    "added": "Payment registered.",
+    "removed": "Payment removed."
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "profile": "Business profile",
+      "tax": "Tax & currency",
+      "numbering": "Numbering",
+      "pdf": "PDF template"
+    },
+    "saved": "Settings saved.",
+    "logoUploaded": "Logo updated.",
+    "logoRemoved": "Logo removed.",
+    "profile": {
+      "title": "Business profile",
+      "description": "These details appear on quotations, invoices, and the PDF header.",
+      "fields": {
+        "name": "Trade name",
+        "legalName": "Legal name",
+        "taxId": "RNC",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address",
+        "city": "City",
+        "country": "Country",
+        "logo": "Logo"
+      },
+      "logoUpload": "Upload logo",
+      "logoRemove": "Remove",
+      "logoHint": "PNG, JPG, WebP, or SVG. Max 1 MB."
+    },
+    "tax": {
+      "title": "Tax & currency",
+      "description": "Default tax rate and currency applied to new quotations and invoices.",
+      "fields": {
+        "currency": "Default currency",
+        "defaultTaxRate": "Default tax rate",
+        "paymentTerms": "Default payment terms (days)"
+      }
+    },
+    "numbering": {
+      "title": "Numbering",
+      "description": "Prefix and next sequential number for new documents. Counters cannot be moved backwards.",
+      "fields": {
+        "invoicePrefix": "Invoice prefix",
+        "invoiceNext": "Next invoice number",
+        "quotationPrefix": "Quotation prefix",
+        "quotationNext": "Next quotation number"
+      }
+    },
+    "pdf": {
+      "title": "PDF template",
+      "description": "Branding and styling for generated PDFs.",
+      "fields": {
+        "primaryColor": "Primary color",
+        "footerText": "Footer text",
+        "showLogo": "Show logo on PDFs"
+      }
+    }
+  },
+  "quotations": {
+    "title": "Quotations",
+    "newQuotation": "New quotation",
+    "editQuotation": "Edit quotation",
+    "noQuotations": "No quotations yet.",
+    "searchPlaceholder": "Search by number or customer",
+    "filterStatus": "Status",
+    "allStatuses": "All statuses",
+    "downloadPdf": "Download PDF",
+    "convertToInvoice": "Convert to invoice",
+    "convertConfirm": "Convert this quotation into an invoice?",
+    "convertSuccess": "Invoice created.",
+    "alreadyConverted": "Already converted into invoice #{number}.",
+    "viewInvoice": "View invoice",
+    "fields": {
+      "quotationNumber": "Number",
+      "customer": "Customer",
+      "issueDate": "Issue date",
+      "expiryDate": "Expiry date",
+      "notes": "Notes",
+      "terms": "Terms",
+      "status": "Status",
+      "currency": "Currency"
+    },
+    "lineItems": {
+      "title": "Items",
+      "addRow": "Add row",
+      "product": "Product",
+      "description": "Description",
+      "quantity": "Qty",
+      "unitPrice": "Unit price",
+      "discount": "Disc. %",
+      "taxRate": "Tax %",
+      "lineTotal": "Total",
+      "remove": "Remove",
+      "subtotal": "Subtotal",
+      "discountTotal": "Discounts",
+      "taxTotal": "Tax",
+      "total": "Total"
+    },
+    "status": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "expired": "Expired"
+    },
+    "actions": {
+      "markSent": "Mark as sent",
+      "markAccepted": "Mark as accepted",
+      "markRejected": "Mark as rejected",
+      "markExpired": "Mark as expired",
+      "backToDraft": "Back to draft"
+    },
+    "created": "Quotation created.",
+    "saved": "Quotation saved.",
+    "deleted": "Quotation deleted."
+  },
+  "products": {
+    "title": "Products & Services",
+    "newProduct": "New item",
+    "editProduct": "Edit item",
+    "noProducts": "No products or services yet. Create your first one.",
+    "searchPlaceholder": "Search by name or SKU",
+    "showInactive": "Show inactive",
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "unitPrice": "Unit price",
+      "type": "Type",
+      "isTaxable": "Taxable",
+      "taxRateOverride": "Tax rate override",
+      "taxRateOverrideHelp": "Optional. Falls back to business default if blank.",
+      "sku": "SKU",
+      "isActive": "Active"
+    },
+    "types": {
+      "product": "Product",
+      "service": "Service"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "delete": {
+      "confirm": "Deactivate this item? It will be hidden from new quotations and invoices.",
+      "success": "Item deactivated.",
+      "restoreSuccess": "Item reactivated."
+    }
+  },
+  "customers": {
+    "title": "Customers",
+    "newCustomer": "New customer",
+    "editCustomer": "Edit customer",
+    "noCustomers": "No customers yet. Create your first one.",
+    "searchPlaceholder": "Search by name, company, or tax ID",
+    "showInactive": "Show inactive",
+    "fields": {
+      "name": "Name",
+      "companyName": "Company",
+      "taxIdType": "Tax ID type",
+      "taxId": "Tax ID",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "city": "City",
+      "country": "Country",
+      "notes": "Notes",
+      "isActive": "Active"
+    },
+    "taxIdTypes": {
+      "rnc": "RNC",
+      "cedula": "Cédula",
+      "passport": "Passport",
+      "other": "Other"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "quotations": "Quotations",
+      "invoices": "Invoices",
+      "payments": "Payments"
+    },
+    "delete": {
+      "confirm": "Deactivate this customer? They will be hidden from new quotations and invoices.",
+      "success": "Customer deactivated.",
+      "restoreSuccess": "Customer reactivated."
+    },
+    "saved": "Customer saved.",
+    "created": "Customer created."
+  }
+}
