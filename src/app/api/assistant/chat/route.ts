@@ -4,6 +4,7 @@ import { getCurrentContextResult } from '@/lib/auth/session';
 import { loadBusinessDefaults } from '@/lib/domain/business';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 export async function POST(request: Request) {
   const ctxResult = await getCurrentContextResult();

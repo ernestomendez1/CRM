@@ -114,11 +114,8 @@ export function prepareCreateProductAction(args: {
     is_active: parsed.data.is_active ?? true,
   };
 
-  const missing: string[] = [];
-  if (!draft.name) missing.push('name');
-  if (draft.unit_price == null || Number.isNaN(draft.unit_price)) missing.push('unit_price');
-  if (missing.length > 0) {
-    return buildMissingFieldsMessage(args.locale, 'create_product', missing);
+  if (!draft.name) {
+    return buildMissingFieldsMessage(args.locale, 'create_product', ['name']);
   }
 
   const validated = productSchema.safeParse(draft);
@@ -219,12 +216,8 @@ export function prepareCreateExpenseAction(args: {
     payment_method: parsed.data.payment_method,
   };
 
-  const missing: string[] = [];
-  if (!draft.vendor_name) missing.push('vendor_name');
-  if (!draft.expense_date) missing.push('expense_date');
-  if (draft.subtotal == null || Number.isNaN(draft.subtotal)) missing.push('subtotal');
-  if (missing.length > 0) {
-    return buildMissingFieldsMessage(args.locale, 'create_expense', missing);
+  if (!draft.vendor_name) {
+    return buildMissingFieldsMessage(args.locale, 'create_expense', ['vendor_name']);
   }
 
   const validated = expenseSchema.safeParse(draft);

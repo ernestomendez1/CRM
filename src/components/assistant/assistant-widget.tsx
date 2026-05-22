@@ -342,16 +342,6 @@ export function AssistantWidget() {
                         </div>
                         <p>{entry.payload.message}</p>
 
-                        {entry.payload.kind === 'clarification' && entry.payload.missingFields.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {entry.payload.missingFields.map((field) => (
-                              <Badge key={field} variant="outline">
-                                {field}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-
                         {entry.payload.kind === 'search_results' && (() => {
                           const payload = entry.payload;
 

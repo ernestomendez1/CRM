@@ -216,7 +216,7 @@ export async function planAssistantTool(args: {
     },
     ...args.history.map((entry) => ({
       role: entry.role,
-      content: [{ type: 'input_text', text: entry.content }],
+      content: [{ type: entry.role === 'assistant' ? 'output_text' : 'input_text', text: entry.content }],
     })),
     {
       role: 'user',
@@ -224,51 +224,70 @@ export async function planAssistantTool(args: {
     },
   ];
 
-  try {
-    const response = await fetch(OPENAI_RESPONSES_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: getAssistantModel(),
-        input,
-        tools: buildTools(),
-        parallel_tool_calls: false,
-        tool_choice: 'auto',
-      }),
-    });
+  const body = JSON.stringify({
+    model: getAssistantModel(),
+    input,
+    tools: buildTools(),
+    parallel_tool_calls: false,
+    tool_choice: 'auto',
+  });
 
-    let payload: OpenAiResponsePayload;
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      payload = (await response.json()) as OpenAiResponsePayload;
-    } catch {
-      return { ok: false, errorCode: 'provider_error' };
-    }
+      const response = await fetch(OPENAI_RESPONSES_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body,
+      });
 
-    if (!response.ok) {
-      const message = payload.error?.message?.toLowerCase() ?? '';
-      if (message.includes('exceeded your current quota')) {
-        return { ok: false, errorCode: 'provider_quota' };
+      let payload: OpenAiResponsePayload;
+      try {
+        payload = (await response.json()) as OpenAiResponsePayload;
+      } catch {
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+          continue;
+        }
+        return { ok: false, errorCode: 'provider_error' };
+      }
+
+      if (!response.ok) {
+        const message = payload.error?.message?.toLowerCase() ?? '';
+        console.error('[assistant] OpenAI error', response.status, JSON.stringify(payload));
+        if (message.includes('exceeded your current quota')) {
+          return { ok: false, errorCode: 'provider_quota' };
+        }
+        if (response.status >= 500 && attempt < 2) {
+          await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+          continue;
+        }
+        return { ok: false, errorCode: 'provider_error' };
+      }
+
+      let toolCall: AssistantToolCall | null = null;
+      try {
+        toolCall = getToolCall(payload);
+      } catch {
+        return { ok: false, errorCode: 'invalid_response' };
+      }
+
+      const message = getOutputText(payload);
+      if (!toolCall && !message) {
+        return { ok: false, errorCode: 'invalid_response' };
+      }
+
+      return { ok: true, toolCall, message };
+    } catch {
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+        continue;
       }
       return { ok: false, errorCode: 'provider_error' };
     }
-
-    let toolCall: AssistantToolCall | null = null;
-    try {
-      toolCall = getToolCall(payload);
-    } catch {
-      return { ok: false, errorCode: 'invalid_response' };
-    }
-
-    const message = getOutputText(payload);
-    if (!toolCall && !message) {
-      return { ok: false, errorCode: 'invalid_response' };
-    }
-
-    return { ok: true, toolCall, message };
-  } catch {
-    return { ok: false, errorCode: 'provider_error' };
   }
+
+  return { ok: false, errorCode: 'provider_error' };
 }
