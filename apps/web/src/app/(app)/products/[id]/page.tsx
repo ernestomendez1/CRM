@@ -6,8 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
-import type { Product } from '@crm/contracts/product';
+import { getProduct } from '@/lib/api/products';
 import { formatMoney, formatPercent } from '@crm/core/money';
 import { ProductDangerActions } from './danger-actions';
 
@@ -22,22 +21,17 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
 
 export default async function ProductDetailPage(props: PageProps<'/products/[id]'>) {
   const { id } = await props.params;
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('products');
   const tc = await getTranslations('common');
   const locale = await getLocale();
 
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .eq('business_id', ctx.businessId)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  if (!data) notFound();
-  const p = data as unknown as Product;
+  const res = await getProduct(id);
+  if (!res.ok) {
+    if (res.error.includes('not found')) notFound();
+    throw new Error(res.error);
+  }
+  const p = res.data;
 
   return (
     <div className="space-y-4">

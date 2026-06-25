@@ -4,29 +4,23 @@ import { ChevronLeft } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
-import type { Product } from '@crm/contracts/product';
+import { getProduct } from '@/lib/api/products';
 import { ProductForm } from '../../product-form';
 import { updateProduct } from '../../actions';
 
 export default async function EditProductPage(props: PageProps<'/products/[id]/edit'>) {
   const { id } = await props.params;
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('products');
   const tc = await getTranslations('common');
 
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .eq('business_id', ctx.businessId)
-    .is('deleted_at', null)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  if (!data) notFound();
-  const product = data as unknown as Product;
+  const res = await getProduct(id);
+  if (!res.ok) {
+    if (res.error.includes('not found')) notFound();
+    throw new Error(res.error);
+  }
+  const product = res.data;
+  if (product.deleted_at) notFound();
 
   const boundAction = updateProduct.bind(null, id);
 

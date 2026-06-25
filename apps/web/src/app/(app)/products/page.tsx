@@ -13,20 +13,10 @@ import {
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
+import { listProducts } from '@/lib/api/products';
 import { formatMoney } from '@crm/core/money';
 
 const PAGE_SIZE = 25;
-
-type Row = {
-  id: string;
-  name: string;
-  sku: string | null;
-  type: 'product' | 'service';
-  unit_price: number;
-  is_taxable: boolean;
-  is_active: boolean;
-};
 
 export default async function ProductsPage(props: PageProps<'/products'>) {
   const searchParams = await props.searchParams;
@@ -34,32 +24,20 @@ export default async function ProductsPage(props: PageProps<'/products'>) {
   const page = Math.max(1, Number(searchParams.page) || 1);
   const showInactive = searchParams.inactive === '1';
 
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('products');
   const tc = await getTranslations('common');
   const locale = await getLocale();
 
-  let query = supabase
-    .from('products')
-    .select('id, name, sku, type, unit_price, is_taxable, is_active', { count: 'exact' })
-    .eq('business_id', ctx.businessId)
-    .is('deleted_at', null)
-    .order('name', { ascending: true })
-    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+  const res = await listProducts({
+    q,
+    page,
+    size: PAGE_SIZE,
+    includeInactive: showInactive,
+  });
+  if (!res.ok) throw new Error(res.error);
+  const { rows, count } = res.data;
 
-  if (!showInactive) {
-    query = query.eq('is_active', true);
-  }
-  if (q.trim()) {
-    const term = `%${q.trim()}%`;
-    query = query.or(`name.ilike.${term},sku.ilike.${term}`);
-  }
-
-  const { data, error, count } = await query;
-  if (error) throw new Error(error.message);
-
-  const rows = (data ?? []) as Row[];
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   return (

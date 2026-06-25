@@ -3,8 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireBusiness } from '@/lib/auth/session';
-import { createProductRecord } from '@/lib/domain/products';
-import { createClient } from '@crm/db/server';
+import * as api from '@/lib/api/products';
 import { productSchema, type ProductInput } from '@crm/contracts/product';
 
 export type ProductActionResult =
@@ -42,19 +41,15 @@ export async function createProduct(
   _prev: ProductActionResult | null,
   formData: FormData,
 ): Promise<ProductActionResult> {
-  const ctx = await requireBusiness();
+  await requireBusiness();
   const result = parseInput(formData);
   if ('_error' in result) return result._error;
 
-  let created: { id: string };
-  try {
-    created = await createProductRecord(ctx, result);
-  } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : 'Failed to create product.' };
-  }
+  const res = await api.createProduct(result);
+  if (!res.ok) return { ok: false, error: res.error, fieldErrors: res.fieldErrors };
 
   revalidatePath('/products');
-  redirect(`/products/${created.id}`);
+  redirect(`/products/${res.data.id}`);
 }
 
 export async function updateProduct(
@@ -62,18 +57,12 @@ export async function updateProduct(
   _prev: ProductActionResult | null,
   formData: FormData,
 ): Promise<ProductActionResult> {
-  const ctx = await requireBusiness();
+  await requireBusiness();
   const result = parseInput(formData);
   if ('_error' in result) return result._error;
 
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('products')
-    .update(result)
-    .eq('id', id)
-    .eq('business_id', ctx.businessId);
-
-  if (error) return { ok: false, error: error.message };
+  const res = await api.updateProduct(id, result);
+  if (!res.ok) return { ok: false, error: res.error, fieldErrors: res.fieldErrors };
 
   revalidatePath('/products');
   revalidatePath(`/products/${id}`);
@@ -81,31 +70,17 @@ export async function updateProduct(
 }
 
 export async function deactivateProduct(id: string) {
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('products')
-    .update({ deleted_at: new Date().toISOString(), is_active: false })
-    .eq('id', id)
-    .eq('business_id', ctx.businessId);
-
-  if (error) throw new Error(error.message);
-
+  await requireBusiness();
+  const res = await api.deactivateProduct(id);
+  if (!res.ok) throw new Error(res.error);
   revalidatePath('/products');
   revalidatePath(`/products/${id}`);
 }
 
 export async function reactivateProduct(id: string) {
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('products')
-    .update({ deleted_at: null, is_active: true })
-    .eq('id', id)
-    .eq('business_id', ctx.businessId);
-
-  if (error) throw new Error(error.message);
-
+  await requireBusiness();
+  const res = await api.reactivateProduct(id);
+  if (!res.ok) throw new Error(res.error);
   revalidatePath('/products');
   revalidatePath(`/products/${id}`);
 }
