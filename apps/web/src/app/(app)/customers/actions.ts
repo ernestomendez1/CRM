@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { requireBusiness } from '@/lib/auth/session';
 import { createCustomerRecord } from '@/lib/domain/customers';
 import { createClient } from '@/lib/supabase/server';
-import { customerSchema, type CustomerInput } from '@/lib/validation/customer';
+import { customerSchema, type CustomerInput } from '@crm/contracts/customer';
 
 export type CustomerActionResult =
   | { ok: true }

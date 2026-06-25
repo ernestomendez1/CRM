@@ -1,9 +1,9 @@
 import type { Locale } from '@/i18n/config';
 import type { AssistantActionType, AssistantSearchResults } from '@/lib/assistant/types';
 import type { BusinessDefaults } from '@/lib/domain/business';
-import type { CustomerInput } from '@/lib/validation/customer';
-import type { ExpenseInput } from '@/lib/validation/expense';
-import type { ProductInput } from '@/lib/validation/product';
+import type { CustomerInput } from '@crm/contracts/customer';
+import type { ExpenseInput } from '@crm/contracts/expense';
+import type { ProductInput } from '@crm/contracts/product';
 
 type CopyLocale = Locale;
 

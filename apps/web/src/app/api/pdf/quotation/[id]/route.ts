@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { QuotationPDF } from '@/lib/pdf/QuotationPDF';
-import type { Quotation, QuotationItem } from '@/lib/validation/quotation';
+import type { Quotation, QuotationItem } from '@crm/contracts/quotation';
 
 export const runtime = 'nodejs';
 

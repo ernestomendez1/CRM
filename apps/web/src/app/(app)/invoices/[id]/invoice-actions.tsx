@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { changeInvoiceStatus, deleteInvoice } from '../actions';
-import type { InvoiceStatus } from '@/lib/validation/invoice';
+import type { InvoiceStatus } from '@crm/contracts/invoice';
 
 export function InvoiceActions({
   id,

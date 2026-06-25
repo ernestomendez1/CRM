@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { InvoicePDF } from '@/lib/pdf/InvoicePDF';
-import type { Invoice, InvoiceItem } from '@/lib/validation/invoice';
+import type { Invoice, InvoiceItem } from '@crm/contracts/invoice';
 
 export const runtime = 'nodejs';
 

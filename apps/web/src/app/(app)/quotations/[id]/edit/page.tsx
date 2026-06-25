@@ -5,7 +5,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
-import type { Quotation, QuotationItem } from '@/lib/validation/quotation';
+import type { Quotation, QuotationItem } from '@crm/contracts/quotation';
 import { QuotationForm } from '../../quotation-form';
 import { updateQuotation } from '../../actions';
 import { loadPickerData } from '../../data';

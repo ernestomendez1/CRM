@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { formatMoney } from '@/lib/money/format';
-import type { Expense } from '@/lib/validation/expense';
+import type { Expense } from '@crm/contracts/expense';
 import { ExpenseActions } from './expense-actions';
 import { getReceiptSignedUrl } from '../actions';
 

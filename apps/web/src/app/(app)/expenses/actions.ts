@@ -7,7 +7,7 @@ import { requireBusiness, type CurrentContext } from '@/lib/auth/session';
 import { createExpenseRecord } from '@/lib/domain/expenses';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
-import { expenseSchema, type ExpenseInput } from '@/lib/validation/expense';
+import { expenseSchema, type ExpenseInput } from '@crm/contracts/expense';
 
 export type ExpenseActionResult =
   | { ok: true; id?: string }

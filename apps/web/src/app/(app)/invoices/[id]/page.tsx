@@ -16,8 +16,8 @@ import {
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { formatMoney } from '@/lib/money/format';
-import type { Invoice, InvoiceItem, InvoiceStatus } from '@/lib/validation/invoice';
-import type { Payment } from '@/lib/validation/payment';
+import type { Invoice, InvoiceItem, InvoiceStatus } from '@crm/contracts/invoice';
+import type { Payment } from '@crm/contracts/payment';
 import { InvoiceActions } from './invoice-actions';
 import { PaymentsPanel } from './payments-panel';
 

@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { CurrentContext } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
-import type { ProductInput, ProductType } from '@/lib/validation/product';
+import type { ProductInput, ProductType } from '@crm/contracts/product';
 
 type DbClient = Awaited<ReturnType<typeof createClient>>;
 

@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
-import type { Customer } from '@/lib/validation/customer';
+import type { Customer } from '@crm/contracts/customer';
 import { CustomerForm } from '../../customer-form';
 import { updateCustomer } from '../../actions';
 

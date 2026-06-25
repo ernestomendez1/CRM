@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
-import type { Product } from '@/lib/validation/product';
+import type { Product } from '@crm/contracts/product';
 import { formatMoney, formatPercent } from '@/lib/money/format';
 import { ProductDangerActions } from './danger-actions';
 

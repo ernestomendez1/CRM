@@ -16,7 +16,7 @@ import {
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { formatMoney } from '@/lib/money/format';
-import type { Quotation, QuotationItem, QuotationStatus } from '@/lib/validation/quotation';
+import type { Quotation, QuotationItem, QuotationStatus } from '@crm/contracts/quotation';
 import { StatusActions } from './status-actions';
 
 const statusVariant: Record<QuotationStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {

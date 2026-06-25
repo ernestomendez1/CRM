@@ -10,7 +10,7 @@ import {
   pdfSettingsSchema,
   profileSchema,
   taxSettingsSchema,
-} from '@/lib/validation/settings';
+} from '@crm/contracts/settings';
 
 export type SettingsResult =
   | { ok: true }

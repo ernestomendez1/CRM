@@ -9,8 +9,8 @@ import {
   invoiceSchema,
   type InvoiceInput,
   type InvoiceStatus,
-} from '@/lib/validation/invoice';
-import { paymentSchema } from '@/lib/validation/payment';
+} from '@crm/contracts/invoice';
+import { paymentSchema } from '@crm/contracts/payment';
 
 export type InvoiceActionResult =
   | { ok: true; id?: string }

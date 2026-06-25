@@ -22,7 +22,7 @@ import {
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { formatMoney } from '@/lib/money/format';
-import { quotationStatuses, type QuotationStatus } from '@/lib/validation/quotation';
+import { quotationStatuses, type QuotationStatus } from '@crm/contracts/quotation';
 
 const PAGE_SIZE = 25;
 

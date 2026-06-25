@@ -23,9 +23,9 @@ import { loadBusinessDefaults, type BusinessDefaults } from '@/lib/domain/busine
 import { createCustomerRecord, searchCustomers } from '@/lib/domain/customers';
 import { createExpenseRecord, searchExpenses } from '@/lib/domain/expenses';
 import { createProductRecord, searchProducts } from '@/lib/domain/products';
-import { customerSchema } from '@/lib/validation/customer';
-import { expenseSchema } from '@/lib/validation/expense';
-import { productSchema } from '@/lib/validation/product';
+import { customerSchema } from '@crm/contracts/customer';
+import { expenseSchema } from '@crm/contracts/expense';
+import { productSchema } from '@crm/contracts/product';
 
 function normalizeText(value: string | null | undefined) {
   const trimmed = value?.trim();

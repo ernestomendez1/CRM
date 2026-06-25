@@ -1,7 +1,7 @@
 import type { Locale } from '@/i18n/config';
-import type { CustomerInput } from '@/lib/validation/customer';
-import type { ExpenseInput } from '@/lib/validation/expense';
-import type { ProductInput } from '@/lib/validation/product';
+import type { CustomerInput } from '@crm/contracts/customer';
+import type { ExpenseInput } from '@crm/contracts/expense';
+import type { ProductInput } from '@crm/contracts/product';
 import type { CustomerSearchResult } from '@/lib/domain/customers';
 import type { ExpenseSearchResult } from '@/lib/domain/expenses';
 import type { ProductSearchResult } from '@/lib/domain/products';

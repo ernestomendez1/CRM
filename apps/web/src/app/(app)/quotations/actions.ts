@@ -10,7 +10,7 @@ import {
   quotationStatuses,
   type QuotationInput,
   type QuotationStatus,
-} from '@/lib/validation/quotation';
+} from '@crm/contracts/quotation';
 
 export type QuotationActionResult =
   | { ok: true; id?: string }

@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { requireBusiness } from '@/lib/auth/session';
 import { createProductRecord } from '@/lib/domain/products';
 import { createClient } from '@/lib/supabase/server';
-import { productSchema, type ProductInput } from '@/lib/validation/product';
+import { productSchema, type ProductInput } from '@crm/contracts/product';
 
 export type ProductActionResult =
   | { ok: true }

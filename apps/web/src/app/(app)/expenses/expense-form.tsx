@@ -19,8 +19,8 @@ import {
   type ExpenseExtractionWarningCode,
 } from '@/lib/ai/expense-extraction';
 import type { ExpenseActionResult } from './actions';
-import type { Expense, ExpensePaymentMethod } from '@/lib/validation/expense';
-import { expensePaymentMethods } from '@/lib/validation/expense';
+import type { Expense, ExpensePaymentMethod } from '@crm/contracts/expense';
+import { expensePaymentMethods } from '@crm/contracts/expense';
 
 type Props = {
   expense?: Expense;

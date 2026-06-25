@@ -5,7 +5,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
-import type { Invoice, InvoiceItem } from '@/lib/validation/invoice';
+import type { Invoice, InvoiceItem } from '@crm/contracts/invoice';
 import { InvoiceForm } from '../../invoice-form';
 import { updateInvoice } from '../../actions';
 import { loadPickerData } from '../../data';

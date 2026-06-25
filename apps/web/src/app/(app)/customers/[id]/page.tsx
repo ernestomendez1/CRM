@@ -16,9 +16,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
-import type { Customer } from '@/lib/validation/customer';
-import type { Quotation, QuotationStatus } from '@/lib/validation/quotation';
-import type { Invoice, InvoiceStatus } from '@/lib/validation/invoice';
+import type { Customer } from '@crm/contracts/customer';
+import type { Quotation, QuotationStatus } from '@crm/contracts/quotation';
+import type { Invoice, InvoiceStatus } from '@crm/contracts/invoice';
 import { formatMoney } from '@/lib/money/format';
 import { CustomerDangerActions } from './danger-actions';
 

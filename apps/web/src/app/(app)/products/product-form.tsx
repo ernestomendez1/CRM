@@ -15,8 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { ProductActionResult } from './actions';
-import type { Product } from '@/lib/validation/product';
-import { productTypes } from '@/lib/validation/product';
+import type { Product } from '@crm/contracts/product';
+import { productTypes } from '@crm/contracts/product';
 
 type Props = {
   product?: Product;

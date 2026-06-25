@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { defaultLocale, locales } from '@/i18n/config';
-import { customerSchema, taxIdTypes } from '@/lib/validation/customer';
-import { expensePaymentMethods, expenseSchema } from '@/lib/validation/expense';
-import { productSchema, productTypes } from '@/lib/validation/product';
+import { customerSchema, taxIdTypes } from '@crm/contracts/customer';
+import { expensePaymentMethods, expenseSchema } from '@crm/contracts/expense';
+import { productSchema, productTypes } from '@crm/contracts/product';
 
 const nullableText = z.string().trim().nullable().optional();
 const localeSchema = z.enum(locales);

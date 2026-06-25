@@ -32,7 +32,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatMoney } from '@/lib/money/format';
-import { paymentMethods, type PaymentMethod } from '@/lib/validation/payment';
+import { paymentMethods, type PaymentMethod } from '@crm/contracts/payment';
 import { addPayment, deletePayment, type PaymentActionResult } from '../actions';
 
 type Row = {

@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
-import type { Expense } from '@/lib/validation/expense';
+import type { Expense } from '@crm/contracts/expense';
 import { ExpenseForm } from '../../expense-form';
 import { updateExpense } from '../../actions';
 
