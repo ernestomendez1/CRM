@@ -1,26 +1,14 @@
-import { assistantChatRequestSchema } from '@/lib/assistant/schemas';
-import { handleAssistantChat } from '@/lib/assistant/service';
-import { getCurrentContextResult } from '@/lib/auth/session';
-import { loadBusinessDefaults } from '@/lib/domain/business';
+import { requireBusiness } from '@/lib/auth/session';
+import { assistantChat } from '@/lib/api/assistant';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30;
 
+/**
+ * Thin proxy to @crm/api's POST /v1/assistant/chat. Keeps the widget
+ * pointed at /api/assistant/chat (no change needed in browser code).
+ */
 export async function POST(request: Request) {
-  const ctxResult = await getCurrentContextResult();
-  if (ctxResult.status === 'unauthenticated') {
-    return Response.json(
-      { ok: false, errorCode: 'unauthorized', message: 'Unauthorized' },
-      { status: 401 },
-    );
-  }
-  if (ctxResult.status === 'no_business') {
-    return Response.json(
-      { ok: false, errorCode: 'no_business', message: 'No business selected' },
-      { status: 403 },
-    );
-  }
-
+  await requireBusiness();
   let body: unknown;
   try {
     body = await request.json();
@@ -30,17 +18,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-
-  const parsed = assistantChatRequestSchema.safeParse(body);
-  if (!parsed.success) {
-    return Response.json(
-      { ok: false, errorCode: 'invalid_request', message: 'Invalid assistant request' },
-      { status: 400 },
-    );
-  }
-
-  const defaults = await loadBusinessDefaults(ctxResult.context);
-  const response = await handleAssistantChat(parsed.data, ctxResult.context, defaults);
+  const response = await assistantChat(body as Parameters<typeof assistantChat>[0]);
   if (!response.ok) {
     const status =
       response.errorCode === 'missing_api_key'
@@ -52,6 +30,5 @@ export async function POST(request: Request) {
             : 400;
     return Response.json(response, { status });
   }
-
   return Response.json(response);
 }

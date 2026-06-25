@@ -5,6 +5,7 @@ import { env } from './lib/env';
 import { errorHandler } from './middleware/error';
 import { authMiddleware, type AuthEnv, getCtx } from './middleware/auth';
 import { ok } from './lib/responses';
+import { assistantRoute } from './routes/assistant';
 import { customersRoute } from './routes/customers';
 import { expensesRoute } from './routes/expenses';
 import { invoicesRoute } from './routes/invoices';
@@ -41,6 +42,7 @@ v1.route('/customers', customersRoute);
 v1.route('/quotations', quotationsRoute);
 v1.route('/invoices', invoicesRoute);
 v1.route('/expenses', expensesRoute);
+v1.route('/assistant', assistantRoute);
 
 app.route('/v1', v1);
 
