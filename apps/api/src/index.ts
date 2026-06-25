@@ -5,6 +5,7 @@ import { env } from './lib/env';
 import { errorHandler } from './middleware/error';
 import { authMiddleware, type AuthEnv, getCtx } from './middleware/auth';
 import { ok } from './lib/responses';
+import { adminRoute } from './routes/admin';
 import { assistantRoute } from './routes/assistant';
 import { customersRoute } from './routes/customers';
 import { expensesRoute } from './routes/expenses';
@@ -22,7 +23,11 @@ app.get('/healthz', (c) =>
   c.json({ ok: true, service: 'api', ts: new Date().toISOString() }),
 );
 
-// Authenticated routes mounted under /v1
+// Admin routes (staff-gated) must be mounted BEFORE the /v1 catchall
+// so they aren't intercepted by the authMiddleware on v1.
+app.route('/v1/admin', adminRoute);
+
+// Authenticated routes mounted under /v1 (business members)
 const v1 = new Hono<AuthEnv>();
 v1.use('*', authMiddleware);
 

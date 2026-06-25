@@ -80,3 +80,40 @@ export async function requireBusiness(): Promise<CurrentContext> {
   }
   return result.context;
 }
+
+export type StaffContext = {
+  userId: string;
+  email: string;
+  staffRole: 'admin' | 'support';
+};
+
+/**
+ * Returns the authenticated user if they are platform staff. Distinct from
+ * business roles (owner/admin/accountant/viewer) — staff lives in the
+ * `staff_users` table and operates the platform itself (admin console).
+ *
+ * Redirects to /login if unauthenticated, /dashboard if logged in but not staff.
+ */
+export async function requireStaff(): Promise<StaffContext> {
+  const user = await getSession();
+  if (!user) redirect('/login');
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('staff_users')
+    .select('role')
+    .eq('user_id', user.id)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to load staff membership: ${error.message}`);
+  }
+  if (!data) redirect('/dashboard');
+
+  return {
+    userId: user.id,
+    email: user.email ?? '',
+    staffRole: (data as { role: 'admin' | 'support' }).role,
+  };
+}
