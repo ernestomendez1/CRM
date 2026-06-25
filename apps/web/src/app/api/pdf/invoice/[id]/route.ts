@@ -2,64 +2,57 @@ import { NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { getTranslations } from 'next-intl/server';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
+import { getInvoice } from '@/lib/api/invoices';
+import { getSettings } from '@/lib/api/settings';
 import { InvoicePDF } from '@/lib/pdf/InvoicePDF';
-import type { Invoice, InvoiceItem } from '@crm/contracts/invoice';
 
 export const runtime = 'nodejs';
 
+/**
+ * PDF rendering stays on web for Phase 2 — i18n labels come from
+ * next-intl which is web-only. The data is loaded via the api client
+ * (no direct Supabase). @react-pdf/renderer keeps living in
+ * apps/web/package.json; moving it to apps/api with a binary proxy is
+ * deferred to a later phase if it becomes a bottleneck.
+ */
 export async function GET(_req: Request, ctxParams: RouteContext<'/api/pdf/invoice/[id]'>) {
   const { id } = await ctxParams.params;
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('invoices');
   const tq = await getTranslations('quotations');
 
-  const [{ data: invoice, error: invErr }, { data: items, error: iErr }, { data: business }] =
-    await Promise.all([
-      supabase
-        .from('invoices')
-        .select('*, customers(name, company_name, tax_id, email, address, city, country)')
-        .eq('id', id)
-        .eq('business_id', ctx.businessId)
-        .maybeSingle(),
-      supabase
-        .from('invoice_items')
-        .select('*')
-        .eq('invoice_id', id)
-        .order('sort_order'),
-      supabase
-        .from('businesses')
-        .select(
-          'name, legal_name, tax_id, email, phone, address, city, country, logo_url, pdf_settings',
-        )
-        .eq('id', ctx.businessId)
-        .maybeSingle(),
-    ]);
+  const [invoiceRes, settingsRes] = await Promise.all([
+    getInvoice(id),
+    getSettings(),
+  ]);
+  if (!invoiceRes.ok) {
+    return new NextResponse(invoiceRes.error, {
+      status: invoiceRes.error.includes('not found') ? 404 : 500,
+    });
+  }
+  if (!settingsRes.ok) {
+    return new NextResponse(settingsRes.error, { status: 500 });
+  }
+  const { invoice: inv, customer, items } = invoiceRes.data;
+  const b = settingsRes.data;
 
-  if (invErr) return new NextResponse(invErr.message, { status: 500 });
-  if (iErr) return new NextResponse(iErr.message, { status: 500 });
-  if (!invoice) return new NextResponse('Not found', { status: 404 });
-
-  const inv = invoice as unknown as Invoice & {
-    customers: {
-      name: string;
-      company_name: string | null;
-      tax_id: string | null;
-      email: string | null;
-      address: string | null;
-      city: string | null;
-      country: string | null;
-    } | null;
+  const business = {
+    name: b.name,
+    legal_name: b.legal_name,
+    tax_id: b.tax_id,
+    email: b.email,
+    phone: b.phone,
+    address: b.address,
+    city: b.city,
+    country: b.country,
+    logo_url: b.logo_url,
+    pdf_settings: b.pdf_settings,
   };
-  const itemRows = (items ?? []) as unknown as InvoiceItem[];
-
-  if (!inv.customers) return new NextResponse('Customer missing', { status: 500 });
 
   const buffer = await renderToBuffer(
     InvoicePDF({
-      business: (business ?? { name: 'Business' }) as Parameters<typeof InvoicePDF>[0]['business'],
-      customer: inv.customers,
+      business: business as Parameters<typeof InvoicePDF>[0]['business'],
+      customer,
       invoice: {
         invoice_number: inv.invoice_number,
         issue_date: inv.issue_date,
@@ -75,7 +68,7 @@ export async function GET(_req: Request, ctxParams: RouteContext<'/api/pdf/invoi
         balance_due: Number(inv.balance_due),
         currency: inv.currency,
       },
-      items: itemRows.map((it) => ({
+      items: items.map((it) => ({
         description: it.description,
         quantity: Number(it.quantity),
         unit_price: Number(it.unit_price),

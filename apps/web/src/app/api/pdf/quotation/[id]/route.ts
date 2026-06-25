@@ -2,63 +2,49 @@ import { NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { getTranslations } from 'next-intl/server';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
+import { getQuotation } from '@/lib/api/quotations';
+import { getSettings } from '@/lib/api/settings';
 import { QuotationPDF } from '@/lib/pdf/QuotationPDF';
-import type { Quotation, QuotationItem } from '@crm/contracts/quotation';
 
 export const runtime = 'nodejs';
 
 export async function GET(_req: Request, ctxParams: RouteContext<'/api/pdf/quotation/[id]'>) {
   const { id } = await ctxParams.params;
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('quotations');
 
-  const [{ data: quotation, error: qErr }, { data: items, error: iErr }, { data: business }] =
-    await Promise.all([
-      supabase
-        .from('quotations')
-        .select('*, customers(name, company_name, tax_id, email, address, city, country)')
-        .eq('id', id)
-        .eq('business_id', ctx.businessId)
-        .maybeSingle(),
-      supabase
-        .from('quotation_items')
-        .select('*')
-        .eq('quotation_id', id)
-        .order('sort_order'),
-      supabase
-        .from('businesses')
-        .select(
-          'name, legal_name, tax_id, email, phone, address, city, country, logo_url, pdf_settings',
-        )
-        .eq('id', ctx.businessId)
-        .maybeSingle(),
-    ]);
+  const [quotationRes, settingsRes] = await Promise.all([
+    getQuotation(id),
+    getSettings(),
+  ]);
+  if (!quotationRes.ok) {
+    return new NextResponse(quotationRes.error, {
+      status: quotationRes.error.includes('not found') ? 404 : 500,
+    });
+  }
+  if (!settingsRes.ok) {
+    return new NextResponse(settingsRes.error, { status: 500 });
+  }
+  const { quotation: q, customer, items } = quotationRes.data;
+  const b = settingsRes.data;
 
-  if (qErr) return new NextResponse(qErr.message, { status: 500 });
-  if (iErr) return new NextResponse(iErr.message, { status: 500 });
-  if (!quotation) return new NextResponse('Not found', { status: 404 });
-
-  const q = quotation as unknown as Quotation & {
-    customers: {
-      name: string;
-      company_name: string | null;
-      tax_id: string | null;
-      email: string | null;
-      address: string | null;
-      city: string | null;
-      country: string | null;
-    } | null;
+  const business = {
+    name: b.name,
+    legal_name: b.legal_name,
+    tax_id: b.tax_id,
+    email: b.email,
+    phone: b.phone,
+    address: b.address,
+    city: b.city,
+    country: b.country,
+    logo_url: b.logo_url,
+    pdf_settings: b.pdf_settings,
   };
-  const itemRows = (items ?? []) as unknown as QuotationItem[];
-
-  if (!q.customers) return new NextResponse('Customer missing', { status: 500 });
 
   const buffer = await renderToBuffer(
     QuotationPDF({
-      business: (business ?? { name: 'Business' }) as Parameters<typeof QuotationPDF>[0]['business'],
-      customer: q.customers,
+      business: business as Parameters<typeof QuotationPDF>[0]['business'],
+      customer,
       quotation: {
         quotation_number: q.quotation_number,
         issue_date: q.issue_date,
@@ -71,7 +57,7 @@ export async function GET(_req: Request, ctxParams: RouteContext<'/api/pdf/quota
         total: Number(q.total),
         currency: q.currency,
       },
-      items: itemRows.map((it) => ({
+      items: items.map((it) => ({
         description: it.description,
         quantity: Number(it.quantity),
         unit_price: Number(it.unit_price),
