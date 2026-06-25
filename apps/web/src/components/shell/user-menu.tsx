@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -31,9 +32,11 @@ export function UserMenu({ email }: { email: string }) {
         }
       />
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs text-muted-foreground truncate">
-          {email}
-        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs text-muted-foreground truncate">
+            {email}
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <form action={signOut}>
           <DropdownMenuItem

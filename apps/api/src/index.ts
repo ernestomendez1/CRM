@@ -6,6 +6,7 @@ import { errorHandler } from './middleware/error';
 import { authMiddleware, type AuthEnv, getCtx } from './middleware/auth';
 import { ok } from './lib/responses';
 import { customersRoute } from './routes/customers';
+import { invoicesRoute } from './routes/invoices';
 import { productsRoute } from './routes/products';
 import { quotationsRoute } from './routes/quotations';
 import { settings } from './routes/settings';
@@ -37,6 +38,7 @@ v1.route('/settings', settings);
 v1.route('/products', productsRoute);
 v1.route('/customers', customersRoute);
 v1.route('/quotations', quotationsRoute);
+v1.route('/invoices', invoicesRoute);
 
 app.route('/v1', v1);
 

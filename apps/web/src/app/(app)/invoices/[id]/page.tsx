@@ -14,10 +14,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
+import { getInvoice } from '@/lib/api/invoices';
 import { formatMoney } from '@crm/core/money';
-import type { Invoice, InvoiceItem, InvoiceStatus } from '@crm/contracts/invoice';
-import type { Payment } from '@crm/contracts/payment';
+import type { InvoiceStatus } from '@crm/contracts/invoice';
 import { InvoiceActions } from './invoice-actions';
 import { PaymentsPanel } from './payments-panel';
 
@@ -32,58 +31,18 @@ const statusVariant: Record<InvoiceStatus, 'default' | 'secondary' | 'destructiv
 
 export default async function InvoiceDetailPage(props: PageProps<'/invoices/[id]'>) {
   const { id } = await props.params;
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('invoices');
   const tc = await getTranslations('common');
   const tq = await getTranslations('quotations');
   const locale = await getLocale();
 
-  const [
-    { data: invoice, error: invErr },
-    { data: items, error: iErr },
-    { data: payments, error: pErr },
-  ] = await Promise.all([
-    supabase
-      .from('invoices')
-      .select(
-        '*, customers(name, company_name, email, tax_id, address, city, country), quotations(quotation_number)',
-      )
-      .eq('id', id)
-      .eq('business_id', ctx.businessId)
-      .maybeSingle(),
-    supabase
-      .from('invoice_items')
-      .select('*')
-      .eq('invoice_id', id)
-      .order('sort_order'),
-    supabase
-      .from('payments')
-      .select('id, payment_date, amount, method, reference, notes')
-      .eq('invoice_id', id)
-      .is('deleted_at', null)
-      .order('payment_date', { ascending: false }),
-  ]);
-
-  if (invErr) throw new Error(invErr.message);
-  if (iErr) throw new Error(iErr.message);
-  if (pErr) throw new Error(pErr.message);
-  if (!invoice) notFound();
-
-  const inv = invoice as unknown as Invoice & {
-    customers: {
-      name: string;
-      company_name: string | null;
-      email: string | null;
-      tax_id: string | null;
-      address: string | null;
-      city: string | null;
-      country: string | null;
-    } | null;
-    quotations: { quotation_number: string } | null;
-  };
-  const itemRows = (items ?? []) as unknown as InvoiceItem[];
-  const paymentRows = (payments ?? []) as unknown as Payment[];
+  const res = await getInvoice(id);
+  if (!res.ok) {
+    if (res.error.includes('not found')) notFound();
+    throw new Error(res.error);
+  }
+  const { invoice: inv, customer, items, payments, quotation_number } = res.data;
 
   const fmt = (n: number) => formatMoney(Number(n), { currency: inv.currency, locale });
   const canEditInvoice = inv.status === 'draft';
@@ -117,13 +76,13 @@ export default async function InvoiceDetailPage(props: PageProps<'/invoices/[id]
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">{inv.invoice_number}</h1>
         <Badge variant={statusVariant[inv.status]}>{t(`status.${inv.status}`)}</Badge>
-        {inv.quotations && (
+        {quotation_number && (
           <Link
             href={`/quotations/${inv.quotation_id}`}
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
             <FileText className="h-3.5 w-3.5" />
-            {t.rich('sourceQuotation', { number: () => inv.quotations!.quotation_number })}
+            {t.rich('sourceQuotation', { number: () => quotation_number })}
           </Link>
         )}
       </div>
@@ -135,13 +94,13 @@ export default async function InvoiceDetailPage(props: PageProps<'/invoices/[id]
           <CardContent className="space-y-1 py-4 text-sm">
             <p className="text-muted-foreground">{t('fields.customer')}</p>
             <p className="font-medium">
-              {inv.customers?.company_name ?? inv.customers?.name ?? '—'}
+              {customer.company_name ?? customer.name ?? '—'}
             </p>
-            {inv.customers?.tax_id && (
-              <p className="text-xs text-muted-foreground">RNC/Cédula: {inv.customers.tax_id}</p>
+            {customer.tax_id && (
+              <p className="text-xs text-muted-foreground">RNC/Cédula: {customer.tax_id}</p>
             )}
-            {inv.customers?.email && (
-              <p className="text-xs text-muted-foreground">{inv.customers.email}</p>
+            {customer.email && (
+              <p className="text-xs text-muted-foreground">{customer.email}</p>
             )}
           </CardContent>
         </Card>
@@ -176,7 +135,7 @@ export default async function InvoiceDetailPage(props: PageProps<'/invoices/[id]
             </TableRow>
           </TableHeader>
           <TableBody>
-            {itemRows.map((it) => (
+            {items.map((it) => (
               <TableRow key={it.id}>
                 <TableCell>{it.description}</TableCell>
                 <TableCell className="text-right tabular-nums">{Number(it.quantity)}</TableCell>
@@ -232,7 +191,7 @@ export default async function InvoiceDetailPage(props: PageProps<'/invoices/[id]
         currency={inv.currency}
         locale={locale}
         canEdit={canAddPayments}
-        payments={paymentRows.map((p) => ({
+        payments={payments.map((p) => ({
           id: p.id,
           payment_date: p.payment_date,
           amount: Number(p.amount),

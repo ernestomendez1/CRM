@@ -20,23 +20,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
+import { listInvoices } from '@/lib/api/invoices';
 import { formatMoney } from '@crm/core/money';
 import { invoiceStatuses, type InvoiceStatus } from '@crm/contracts/invoice';
 
 const PAGE_SIZE = 25;
-
-type Row = {
-  id: string;
-  invoice_number: string;
-  issue_date: string;
-  due_date: string | null;
-  status: InvoiceStatus;
-  total: number;
-  balance_due: number;
-  currency: string;
-  customers: { name: string; company_name: string | null } | null;
-};
 
 const statusVariant: Record<InvoiceStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   draft: 'secondary',
@@ -57,32 +45,19 @@ export default async function InvoicesPage(props: PageProps<'/invoices'>) {
       : null;
   const page = Math.max(1, Number(searchParams.page) || 1);
 
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('invoices');
   const tc = await getTranslations('common');
   const locale = await getLocale();
 
-  let query = supabase
-    .from('invoices')
-    .select(
-      'id, invoice_number, issue_date, due_date, status, total, balance_due, currency, customers!inner(name, company_name)',
-      { count: 'exact' },
-    )
-    .eq('business_id', ctx.businessId)
-    .is('deleted_at', null)
-    .order('issue_date', { ascending: false })
-    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-
-  if (statusFilter) query = query.eq('status', statusFilter);
-  if (q.trim()) {
-    const term = `%${q.trim()}%`;
-    query = query.or(`invoice_number.ilike.${term},customers.name.ilike.${term}`);
-  }
-
-  const { data, error, count } = await query;
-  if (error) throw new Error(error.message);
-  const rows = (data ?? []) as unknown as Row[];
+  const res = await listInvoices({
+    q,
+    status: statusFilter ?? undefined,
+    page,
+    size: PAGE_SIZE,
+  });
+  if (!res.ok) throw new Error(res.error);
+  const { rows, count } = res.data;
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   return (
@@ -148,7 +123,7 @@ export default async function InvoicesPage(props: PageProps<'/invoices'>) {
                       {r.invoice_number}
                     </Link>
                   </TableCell>
-                  <TableCell>{r.customers?.company_name ?? r.customers?.name ?? '—'}</TableCell>
+                  <TableCell>{r.customer?.company_name ?? r.customer?.name ?? '—'}</TableCell>
                   <TableCell>{r.issue_date}</TableCell>
                   <TableCell>{r.due_date ?? '—'}</TableCell>
                   <TableCell className="text-right tabular-nums">
