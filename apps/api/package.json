@@ -1,0 +1,29 @@
+{
+  "name": "@crm/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts --format esm --out-dir dist --clean --target node24",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@crm/contracts": "workspace:*",
+    "@crm/db": "workspace:*",
+    "@hono/node-server": "^1.13.0",
+    "@hono/zod-openapi": "^1.4.0",
+    "hono": "^4.10.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@crm/tsconfig": "workspace:*",
+    "@types/node": "^20",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5",
+    "vitest": "^4.1.7"
+  }
+}
