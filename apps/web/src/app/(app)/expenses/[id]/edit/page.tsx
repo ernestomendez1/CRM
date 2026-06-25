@@ -4,28 +4,23 @@ import { ChevronLeft } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
-import type { Expense } from '@crm/contracts/expense';
+import { getExpense } from '@/lib/api/expenses';
 import { ExpenseForm } from '../../expense-form';
 import { updateExpense } from '../../actions';
 
 export default async function EditExpensePage(props: PageProps<'/expenses/[id]/edit'>) {
   const { id } = await props.params;
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('expenses');
   const tc = await getTranslations('common');
 
-  const { data, error } = await supabase
-    .from('expenses')
-    .select('*')
-    .eq('id', id)
-    .eq('business_id', ctx.businessId)
-    .is('deleted_at', null)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) notFound();
-  const expense = data as unknown as Expense;
+  const res = await getExpense(id);
+  if (!res.ok) {
+    if (res.error.includes('not found')) notFound();
+    throw new Error(res.error);
+  }
+  const expense = res.data;
+  if (expense.deleted_at) notFound();
 
   const boundAction = updateExpense.bind(null, id);
 

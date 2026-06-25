@@ -21,22 +21,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
+import { listExpenses } from '@/lib/api/expenses';
 import { formatMoney } from '@crm/core/money';
 
 const PAGE_SIZE = 25;
-
-type Row = {
-  id: string;
-  vendor_name: string;
-  vendor_tax_id: string | null;
-  expense_date: string;
-  category: string | null;
-  total: number;
-  currency: string;
-  has_fiscal_receipt: boolean;
-  fiscal_receipt_number: string | null;
-};
 
 export default async function ExpensesPage(props: PageProps<'/expenses'>) {
   const searchParams = await props.searchParams;
@@ -46,35 +34,21 @@ export default async function ExpensesPage(props: PageProps<'/expenses'>) {
   const fiscal = typeof searchParams.fiscal === 'string' ? searchParams.fiscal : '';
   const page = Math.max(1, Number(searchParams.page) || 1);
 
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('expenses');
   const tc = await getTranslations('common');
   const locale = await getLocale();
 
-  let query = supabase
-    .from('expenses')
-    .select(
-      'id, vendor_name, vendor_tax_id, expense_date, category, total, currency, has_fiscal_receipt, fiscal_receipt_number',
-      { count: 'exact' },
-    )
-    .eq('business_id', ctx.businessId)
-    .is('deleted_at', null)
-    .order('expense_date', { ascending: false })
-    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-
-  if (q.trim()) {
-    const term = `%${q.trim()}%`;
-    query = query.or(`vendor_name.ilike.${term},fiscal_receipt_number.ilike.${term}`);
-  }
-  if (from) query = query.gte('expense_date', from);
-  if (to) query = query.lte('expense_date', to);
-  if (fiscal === 'yes') query = query.eq('has_fiscal_receipt', true);
-  if (fiscal === 'no') query = query.eq('has_fiscal_receipt', false);
-
-  const { data, error, count } = await query;
-  if (error) throw new Error(error.message);
-  const rows = (data ?? []) as Row[];
+  const res = await listExpenses({
+    q,
+    from: from || undefined,
+    to: to || undefined,
+    fiscal: fiscal === 'yes' || fiscal === 'no' ? fiscal : undefined,
+    page,
+    size: PAGE_SIZE,
+  });
+  if (!res.ok) throw new Error(res.error);
+  const { rows, count } = res.data;
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   return (

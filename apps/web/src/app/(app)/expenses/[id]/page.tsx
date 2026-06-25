@@ -6,9 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
+import { getExpense } from '@/lib/api/expenses';
 import { formatMoney } from '@crm/core/money';
-import type { Expense } from '@crm/contracts/expense';
 import { ExpenseActions } from './expense-actions';
 import { getReceiptSignedUrl } from '../actions';
 
@@ -23,24 +22,20 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
 
 export default async function ExpenseDetailPage(props: PageProps<'/expenses/[id]'>) {
   const { id } = await props.params;
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('expenses');
   const tc = await getTranslations('common');
   const locale = await getLocale();
 
-  const { data, error } = await supabase
-    .from('expenses')
-    .select('*')
-    .eq('id', id)
-    .eq('business_id', ctx.businessId)
-    .is('deleted_at', null)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) notFound();
-  const e = data as unknown as Expense;
+  const res = await getExpense(id);
+  if (!res.ok) {
+    if (res.error.includes('not found')) notFound();
+    throw new Error(res.error);
+  }
+  const e = res.data;
+  if (e.deleted_at) notFound();
 
-  const receiptUrl = e.receipt_file_url ? await getReceiptSignedUrl(e.receipt_file_url) : null;
+  const receiptUrl = e.receipt_file_url ? await getReceiptSignedUrl(e.id) : null;
   const isPdfReceipt = !!e.receipt_file_url && e.receipt_file_url.toLowerCase().endsWith('.pdf');
 
   return (
