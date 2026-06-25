@@ -17,7 +17,7 @@
 
 ## Contexto
 
-Producto: CRM + ERP B2B multi-tenant para PyMEs en República Dominicana, con facturación, gestión de clientes/productos/gastos, asistente AI, y (futuro) integración con plataforma fiscal externa.
+Producto: ERP B2B multi-tenant para PyMEs en República Dominicana, con facturación, cotizaciones, cuentas por cobrar, gestión de productos/gastos, asistente AI, y (futuro) integración con plataforma fiscal externa.
 
 **Estado actual:**
 - Next.js 16.2.6 monolítico, desplegado en Vercel (`prj_dza2rFixCFJR5n5pxEe7NvhTXUSS`).
@@ -43,7 +43,7 @@ Producto: CRM + ERP B2B multi-tenant para PyMEs en República Dominicana, con fa
 | Auth usuarios | Supabase Auth + JWT forward al API | API verifica JWT y usa cliente Supabase con ese token → RLS sigue aplicando. |
 | Comunicación web↔api | BFF sobre Railway Private Network | Next.js es lo único expuesto. Llama API por `http://api.railway.internal:8080`. |
 | Build | Dockerfile multi-stage + `output: 'standalone'` + `turbo prune` | Portabilidad (no lock-in Railway), fuentes para PDFs, reproducibilidad para auditoría. |
-| Background jobs | pg-boss (diferido a Fase 4) | Cuando aparezca el primer job real. Sin Redis inicialmente. |
+| Background jobs | pg-boss (diferido a Fase 8) | Justificado por facturación recurrente y recordatorios automáticos. Sin Redis inicialmente. |
 | Email | Resend + React Email | Cuando se agregue notificaciones (Fase 3). |
 | Observability | Sentry (errores) + Axiom (logs) + OpenTelemetry (traces) | Se agrega en Fase 1 al levantar Railway. |
 | Cutover Vercel | Hard cutover (sin paralelo) | Confirmado por el usuario. Backup: mantener proyecto Vercel 48h por si rollback. |
@@ -192,81 +192,99 @@ Producto: CRM + ERP B2B multi-tenant para PyMEs en República Dominicana, con fa
 
 ## FASE 2 — Migración de dominios a API REST
 
-**Status:** ⏳ Pendiente
-**Iniciada:** —
-**Completada:** —
+**Status:** ✅ Completada
+**Iniciada:** 2026-06-25
+**Completada:** 2026-06-25
 **Estimación:** 3-6 semanas
+**Real:** ~1 día (sesión enfocada, sin features paralelas)
 
-**Objetivo:** Cada dominio del producto (settings, products, customers, quotations, invoices, expenses) consumido por el web vía HTTP al `apps/api`. Server Actions eliminados o reducidos a wrappers de invalidación de cache.
+**Objetivo:** Cada dominio del producto (settings, products, customers, quotations, invoices, expenses) consumido por el web vía HTTP al `apps/api`. Server Actions reducidos a wrappers que forwardean al api y invalidan cache.
 
 ### Infraestructura compartida
 
-- [ ] `apps/web/src/lib/api-client.ts`: cliente fetch tipado que envuelve `fetch`, lee JWT desde cookies de Supabase (server-side) o session (client-side), adjunta `Authorization: Bearer ...`, usa `process.env.API_URL`
-- [ ] `apps/api/src/lib/responses.ts`: helpers de respuesta estandarizada (`ok()`, `created()`, `badRequest()`, `notFound()`, `forbidden()`)
-- [ ] Generador de OpenAPI spec: `pnpm --filter api gen:openapi` produce `apps/api/openapi.json`
+- [x] `apps/web/src/lib/api-client.ts`: server-only fetch wrapper con JWT forwarding (`apiGet/Post/Patch/Put/Delete/PostForm`)
+- [x] `apps/api/src/lib/responses.ts`: helpers `ok`, `created`, `noContent`, `badRequest`, `unauthorized`, `forbidden`, `notFound`, `conflict`, `unprocessable`, `serverError`
+- [x] `apps/api/src/lib/errors.ts`: `AppError` + `zodToFieldErrors`
+- [x] `apps/api/src/middleware/auth.ts`: extract Bearer JWT, verify con `supabase.auth.getUser`, load business_id vía Drizzle, inyectar `ctx`
+- [x] `apps/api/src/lib/db.ts` + `packages/db/src/drizzle.ts`: Drizzle client cacheado por proceso, conexión vía `SUPABASE_DB_POOLER_URL`
+- [~] **Diferido**: OpenAPI spec auto-generado (`@hono/zod-openapi/createRoute` por endpoint). Se difiere a Fase 5 cuando llegue el SDK público para partners.
 
 ### Migración por dominio
 
-Orden sugerido (menor a mayor riesgo):
-
-#### Settings (más simple, sin relaciones)
-- [ ] Endpoints `GET/PATCH /v1/settings/profile`, `/v1/settings/numbering`, `/v1/settings/branding`
-- [ ] Web llama vía `api-client` desde server actions wrappers
-- [ ] `revalidatePath('/settings')` se mantiene en el wrapper Next.js
-- [ ] Borrar lógica directa de Supabase en `src/app/(app)/settings/actions.ts`
+#### Settings
+- [x] Endpoints GET / + PATCH /profile, /tax, /numbering, /pdf + POST/DELETE /logo
+- [x] Numbering guard (no permite retroceder counter) → 409
+- [x] Logo multipart upload con Supabase Storage admin client (cleanup del logo previo)
 
 #### Products
-- [ ] Endpoints REST CRUD `/v1/products`
-- [ ] Migrar `src/app/(app)/products/actions.ts`
-- [ ] Tests verdes
+- [x] CRUD + PATCH /:id/(de)activate + GET /search (para assistant)
+- [x] Paginación con count, búsqueda ilike por name + sku
 
 #### Customers
-- [ ] Endpoints REST CRUD `/v1/customers`
-- [ ] Migrar `src/app/(app)/customers/actions.ts`
-- [ ] Tests verdes
+- [x] CRUD + GET /:id/overview (customer + quotations + invoices + payments en un solo request — usado por la página de detalle)
+- [x] CRUD + GET /search
 
 #### Quotations
-- [ ] Endpoints REST `/v1/quotations` (CRUD + cambio de estado)
-- [ ] Migrar acciones de quotations
-- [ ] Tests verdes
+- [x] CRUD multi-tabla con `db.transaction` (header + items)
+- [x] PATCH /:id/status, DELETE /:id (guard `converted_invoice_id`)
+- [x] POST /:id/convert: transacción que crea invoice + items + link source quotation
+- [x] RPC `next_quotation_number` / `next_invoice_number` vía `db.execute(sql\`...\`)`
 
 #### Invoices
-- [ ] Endpoints REST `/v1/invoices` (CRUD + emisión + cambio de estado)
-- [ ] Migrar acciones de invoices
-- [ ] Confirmar que `fiscal_metadata` JSONB sigue siendo escribible (la integración fiscal externa se trabajará a futuro, fuera del scope actual del plan)
-- [ ] Tests verdes
+- [x] CRUD multi-tabla con transacciones (header + items)
+- [x] Guard `status === 'draft'` para update/delete (409 si no)
+- [x] PATCH /:id/status + POST /:id/payments + DELETE /:id/payments/:pid, todos llaman `recomputeInvoiceStatus` usando `applyPayments` de `@crm/core/money`
 
 #### Expenses
-- [ ] Endpoints REST `/v1/expenses` (CRUD + extracción AI)
-- [ ] Migrar `src/app/(app)/expenses/actions.ts`
-- [ ] Migrar `src/app/api/expenses/extract/route.ts` → `apps/api/src/routes/expenses.ts:extract`
-- [ ] Tests verdes
+- [x] CRUD multipart (form fields + opcional `receipt` file)
+- [x] DELETE /:id/receipt, POST /:id/receipt-url (signed URL de 5 min, ahora con el expense id en lugar del storage path)
+- [x] Cleanup atómico del archivo si la inserción falla
 
-### Migrar rutas AI pesadas
+### Migrar rutas AI
 
-- [ ] `/api/assistant/chat` → `apps/api/src/routes/assistant.ts:chat` con streaming Hono nativo
-- [ ] `/api/assistant/execute` → `apps/api/src/routes/assistant.ts:execute`
-- [ ] Quitar `export const maxDuration = 30` (era Vercel-only, irrelevante en Railway)
-- [ ] Web actualiza llamadas a las nuevas URLs del api
+- [x] `POST /v1/assistant/chat` con tool calling (prepare/search para products, customers, expenses)
+- [x] `POST /v1/assistant/execute` que crea el record vía `createXRecord` y retorna path para revalidatePath en web
+- [x] `POST /v1/expenses/extract` con upload a OpenAI Files API (PDF) o base64 inline (imágenes), structured JSON output, cleanup en finally
+- [~] **Decisión**: No streaming. Mantenemos el shape JSON existente (chat + execute responden discriminated union). Streaming se evaluará cuando UX lo pida.
+- [~] **Decisión**: Web mantiene rutas `/api/assistant/{chat,execute}` y `/api/expenses/extract` como thin proxies a la api — el widget en `assistant-widget.tsx` y `expense-form.tsx` siguen llamando esos paths, sin tocar código de browser.
 
 ### Migrar generación de PDFs
 
-- [ ] `/api/pdf/quotation/[id]` → `apps/api/src/routes/pdf.ts:quotation`
-- [ ] `/api/pdf/invoice/[id]` → `apps/api/src/routes/pdf.ts:invoice`
-- [ ] Confirmar fuentes en imagen Docker del api (test visual de PDF generado)
-- [ ] Mover `@react-pdf/renderer` y `src/lib/pdf/*` a `apps/api/`
+- [x] Las rutas `/api/pdf/invoice/[id]` y `/api/pdf/quotation/[id]` ahora cargan datos via `api-client` (no Supabase directo)
+- [~] **Decisión**: `@react-pdf/renderer` se queda en `apps/web`. Razón: las labels vienen de `next-intl` (web-only). Mover el rendering al api requeriría forwardear todas las labels en el body o duplicar i18n en api. Sin un beneficio claro (las dependencias del api ya están limpias), se difiere a futuro si la latencia de PDFs se vuelve problema medible.
 
 ### Limpieza
 
-- [ ] Borrar `apps/web/src/app/api/` (debería quedar vacío)
-- [ ] Borrar `src/lib/fiscal/` y `src/app/api/fiscal/` (directorios placeholder vacíos)
-- [ ] Quitar `FISCAL_PLATFORM_*` de `.env.example`
-- [ ] Verificar que el web no tiene `SUPABASE_SERVICE_ROLE_KEY` (debe vivir solo en api)
-- [ ] OpenAPI spec publicado en `apps/api/openapi.json` y comiteado
+- [x] Borrar `apps/web/src/lib/domain/`, `apps/web/src/lib/openai/`, `apps/web/src/lib/assistant/{copy,openai,schemas,service}.ts` (mantenido solo `types.ts` con search result types inlined)
+- [x] Borrar tests viejos: `tests/unit/{api,assistant,domain}/*.test.ts` y `tests/unit/expense-extraction.test.ts`
+- [x] `apps/web/.env.example`: quitadas `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_POOLER_URL`, `OPENAI_API_KEY`, `OPENAI_EXPENSE_MODEL`
+- [x] Railway web service: borradas esas mismas 4 env vars
+- [x] OpenAPI spec → diferido a Fase 5
+- [-] **No aplicable**: `src/lib/fiscal/` y `src/app/api/fiscal/` ya estaban borrados desde Fase 1
 
 ### Notas de ejecución
 
-_(Vacío hasta que se ejecute.)_
+**Decisiones de runtime:**
+- **Drizzle desde día 1** (no supabase-js para queries del api) — porque vas a mover la DB de Supabase a Railway próximamente, y con Drizzle el swap es solo cambiar `DATABASE_URL`. Auth y Storage siguen con supabase-js.
+- **Service-role connection** al pooler URL en lugar de RLS-applied JWT. Razón: simpler, faster, application-level enforcement de `business_id` en cada query. RLS sigue como defense-in-depth pero no se depende de él.
+- **`db.execute(sql\`...\`)` para las RPCs** existentes (`next_quotation_number`, `next_invoice_number`) en lugar de reimplementar el counter en TS. Mantiene atomicidad y portabilidad cuando migres DB.
+- **Forms preservan `useActionState`**: los Server Actions ahora son wrappers thin (parsean FormData → llaman api → revalidatePath → retornan SettingsResult/etc.). UI no cambió, progressive enhancement intacto.
+
+**Sorpresas en ejecución:**
+1. **noUncheckedIndexedAccess** en `packages/tsconfig/base.json` rompe destructurings como `const [{ count }] = await db.select(...)`. Workaround: `countRows[0]?.count ?? 0`.
+2. **tsup bundles workspace deps pero deja node_modules externos** — `pg` (transitive de `@crm/db`) no se podía resolver hasta agregarlo como dep directa en `apps/api/package.json`. Mismo patrón para `@crm/core` que el api importa para `calculateTotals`/`applyPayments`.
+3. **`turbo prune` + tsup**: separar `deps` y `builder` stages rompía symlinks de pnpm workspace. Solución: install + build en el mismo stage.
+4. **Hono multipart** en el endpoint `/extract` no funciona bien con el `api-client.apiPostForm` wrapper porque la api retorna shape custom (`{ ok, extracted, warnings }`) en lugar de `ApiResult<T>`. Solución: la ruta web hace fetch crudo y forwardea el JSON tal cual al widget.
+5. **Customer overview endpoint**: la página de detalle del customer carga 4 recursos (customer + quotations + invoices + payments). En lugar de 4 round-trips al api, se agregó `GET /v1/customers/:id/overview` que retorna todo en un single query con joins. Pattern repetible si otras páginas tienen patrones similares.
+6. **i18n labels en PDFs**: dado que `next-intl` no existe en api, mover PDFs al api requería forwardear ~20 labels por request o reimplementar i18n. Decisión: mantener rendering en web pero data via api.
+
+**Smoke tests automáticos:** Generación de JWT vía Supabase Admin (`auth.admin.generateLink` → `verifyOtp`), exposición temporal del api con dominio público, runner Node con `fetch` directo. Cobertura: foundation (healthz, /v1/me, auth negative), settings (GET + PATCH), products (CRUD + deactivate), customers (CRUD + overview + cross-tenant), quotations (CRUD + status + convert + guard "can't delete converted"), invoices (CRUD + status transitions + payment add + balance recompute + paid status), expenses (CRUD), assistant chat. Total: 37 tests across two runs, todos verdes. Script no committed (one-off).
+
+**Pendientes para Fase 3+:**
+- OpenAPI spec auto-generado vía `@hono/zod-openapi` (Fase 5 cuando llegue SDK público)
+- Integration test infrastructure formal en `apps/api/tests/integration/` (los smoke tests externos cubren end-to-end pero no hay tests reproducibles en CI)
+- Revisar si `OPENAI_API_KEY` rotation es manual o automatizable
+- Si la DB se mueve a Railway, swap `SUPABASE_DB_POOLER_URL` → `DATABASE_URL` en api
 
 ---
 
@@ -325,16 +343,269 @@ _(Vacío hasta que se ejecute.)_
 
 ---
 
-## FASE 4 — Worker (cuando lo justifique)
+## FASE 4 — Dashboard real con métricas
 
 **Status:** ⏳ Pendiente
 **Iniciada:** —
 **Completada:** —
-**Estimación:** 1-2 semanas
+**Estimación:** 3-5 días
 
-**Objetivo:** Background job processor para tareas asíncronas que no deben bloquear requests del API. Solo activar cuando exista un job real que lo justifique.
+**Objetivo:** Reemplazar el dashboard skeleton con métricas reales agregadas desde la base de datos. Es lo primero que un cliente ve al loguearse — sin números, el producto se siente vacío.
 
-**Criterio de activación:** un endpoint del api tarda >2s consistentemente y la operación se puede diferir, O necesitas garantía de entrega (emails, webhooks salientes).
+### Endpoints de agregación
+
+- [ ] `GET /v1/dashboard/summary`: ingresos del mes (sum de invoices issued/paid en current month), gastos del mes, cuentas por cobrar (sum de `balance_due` de invoices issued/partially_paid/overdue), beneficio neto (ingresos − gastos)
+- [ ] `GET /v1/dashboard/top-debtors`: top 5 clientes con mayor `balance_due` agregado
+- [ ] `GET /v1/dashboard/upcoming-invoices`: facturas con due_date dentro de los próximos 7 días + facturas overdue
+- [ ] `GET /v1/dashboard/recent-activity`: últimas 10 transacciones (facturas emitidas, pagos recibidos, gastos registrados)
+- [ ] Queries respetan RLS (filtran por business_id automáticamente)
+
+### UI
+
+- [ ] Reemplazar widgets placeholder en `apps/web/src/app/(app)/dashboard/page.tsx` con datos reales
+- [ ] Comparativa mes actual vs mes anterior (delta + flecha arriba/abajo)
+- [ ] Selector de período (mes actual, mes anterior, últimos 30/90 días, año actual)
+- [ ] Widget de cuentas por cobrar con drill-down a `/invoices?status=overdue`
+- [ ] Widget de top deudores con drill-down a cada cliente
+- [ ] Estados vacíos amigables (empty states) para clientes nuevos sin datos
+
+### Performance
+
+- [ ] Cachear agregaciones por business + período usando Runtime Cache o tabla materializada si crece
+- [ ] Invalidar cache al crear/editar invoice, expense, payment
+- [ ] Smoke test: dashboard carga en <500ms con dataset de 1000 facturas
+
+### Notas de ejecución
+
+_(Vacío hasta que se ejecute.)_
+
+---
+
+## FASE 5 — Reportes, envío de facturas y roles
+
+**Status:** ⏳ Pendiente
+**Iniciada:** —
+**Completada:** —
+**Estimación:** 3-4 semanas
+
+**Objetivo:** Cerrar los gaps que más impactan la venta diaria: reportes que el contador del cliente necesita, envío de facturas sin tener que descargar el PDF a mano, y permisos granulares para que el dueño confíe en dar acceso a su equipo.
+
+### Reportes y exports
+
+- [ ] Estado de cuenta por cliente: endpoint `GET /v1/customers/:id/statement?from=&to=` (facturas + pagos + saldo)
+- [ ] Reporte de ventas por período: endpoint `GET /v1/reports/sales?from=&to=&groupBy=customer|product|month`
+- [ ] Reporte de gastos por categoría: endpoint `GET /v1/reports/expenses?from=&to=&groupBy=category|vendor`
+- [ ] P&L básico: endpoint `GET /v1/reports/pnl?from=&to=` (ingresos − gastos por categoría)
+- [ ] Export CSV de listas: `?format=csv` en endpoints de customers, invoices, expenses, products
+- [ ] Export Excel (xlsx) de los reportes anteriores
+- [ ] UI: nueva sección `/reports` con tabs por reporte + selector de período + botón export
+- [ ] PDF de estado de cuenta por cliente (reusa infra de PDF existente)
+
+### Envío de facturas por email y WhatsApp
+
+- [ ] Setup Resend si no se completó en Fase 3 (dominio, DNS, API key)
+- [ ] Template React Email `invoice.tsx`: cuerpo con resumen + link de descarga (o PDF adjunto)
+- [ ] Endpoint `POST /v1/invoices/:id/send` con body `{ to: string[], cc?: string[], message?: string }`
+- [ ] Tabla `invoice_deliveries`: `id`, `invoice_id`, `channel` (email|whatsapp), `recipient`, `sent_at`, `status`, `error_message`
+- [ ] UI: botón "Enviar" en detalle de factura abre modal (destinatario pre-llenado con email del customer, mensaje editable)
+- [ ] Generador de link `wa.me/<phone>?text=...` con texto pre-armado (incluye número de factura, total, link al PDF si el storage lo soporta público o signed URL)
+- [ ] Historial de envíos visible en el detalle de la factura ("Enviada a juan@ejemplo.com el 2026-06-25")
+- [ ] Misma funcionalidad para quotations (`POST /v1/quotations/:id/send`)
+
+### Roles aplicados (no solo en schema)
+
+- [ ] Middleware de autorización en API: `requireRole(['owner','admin','accountant'])` por endpoint
+- [ ] Mapa de permisos por recurso: documentar qué rol puede crear/editar/borrar customers, products, invoices, expenses, settings
+- [ ] `accountant`: crea y edita gastos, ve facturas y reportes, NO edita productos ni configuración
+- [ ] `viewer`: solo lectura en todo
+- [ ] UI esconde botones de acciones no permitidas según rol (cliente lee `role` del contexto de sesión)
+- [ ] Tests de autorización por rol en `apps/api/tests/auth/`
+
+### Notas de ejecución
+
+_(Vacío hasta que se ejecute.)_
+
+---
+
+## FASE 6 — Pagos como entidad de primera clase
+
+**Status:** ⏳ Pendiente
+**Iniciada:** —
+**Completada:** —
+**Estimación:** 2 semanas
+
+**Objetivo:** Refactorizar `payments` para que sea un documento independiente de la factura, capaz de aplicarse a varias facturas o quedar como anticipo. Habilita "Recibo de Ingreso" como PDF, vista de cobros agregada, y reportes de cobranza que el contador del cliente espera. Alcance v1 acotado: sin `cash_accounts` ni conciliación bancaria todavía (esos vendrían después si crece la demanda).
+
+### Schema y migración
+
+- [ ] Migración: agregar a `payments` las columnas `payment_number` (auto-generado, ej. `REC-00001`), `customer_id` (FK), `unallocated_amount` (decimal). Mantener temporalmente `invoice_id` como nullable para backfill
+- [ ] Migración: tabla `payment_applications` con `id`, `business_id`, `payment_id` (FK cascade), `invoice_id` (FK restrict), `amount_applied` (decimal), `applied_at`, `created_by`
+- [ ] Migración data: para cada `payment` existente, crear una `payment_application` con `amount_applied = payment.amount` y `invoice_id = payment.invoice_id`. Setear `customer_id` desde la factura. Setear `unallocated_amount = 0`
+- [ ] Migración: eliminar columna `payments.invoice_id` después de validar backfill
+- [ ] RPC `next_payment_number(business_id)` siguiendo patrón de invoices/quotations (ACID, sin duplicados)
+- [ ] Setting de numeración en `businesses.numbering_settings`: `payment_prefix` (default `REC-`), `payment_next_number`
+- [ ] Función SQL `recalculate_invoice_balance(invoice_id)`: ahora suma desde `payment_applications` en vez de `payments`. Actualiza `amount_paid`, `balance_due`, `status`
+- [ ] RLS en `payment_applications` por `business_id`
+
+### Lógica de negocio en API
+
+- [ ] Endpoint `POST /v1/payments`: body `{ customer_id, payment_date, amount, method, reference, notes, applications: [{ invoice_id, amount_applied }] }`. Suma de applications ≤ amount. Diferencia → `unallocated_amount`. Transacción atómica
+- [ ] Endpoint `POST /v1/payments/:id/apply`: aplicar `unallocated_amount` (o parte de él) a una factura existente. Útil para anticipos que después se reconcilian
+- [ ] Endpoint `GET /v1/payments`: lista con filtros por fecha, customer, método, estado (con/sin saldo a aplicar)
+- [ ] Endpoint `GET /v1/payments/:id`: detalle con applications expandidas (info de cada factura aplicada)
+- [ ] Endpoint `DELETE /v1/payments/:id`: soft delete; cascada en applications; recalcula balance de las facturas afectadas
+- [ ] Validación: no permitir `amount_applied > invoice.balance_due` en el momento de aplicar
+- [ ] Mantener compatibilidad del flujo "registrar pago de esta factura": un endpoint conveniencia `POST /v1/invoices/:id/payments` que crea payment + una sola application en una transacción (lo que el UX actual ya hace)
+
+### UI
+
+- [ ] Nueva sección `/payments`: lista de cobros con columnas (fecha, número, cliente, monto, sin aplicar, método). Filtros por período, cliente, método
+- [ ] Detalle de pago: muestra applications (lista de facturas a las que se aplicó + montos), saldo sin aplicar destacado, botón "Aplicar saldo a factura"
+- [ ] Formulario de nuevo pago (entry directo desde `/payments/new`): selecciona cliente, monto total, luego picker de facturas pendientes de ese cliente con asignación de montos (auto-completar al saldo de cada una hasta agotar el pago)
+- [ ] Flujo rápido desde factura sigue funcionando: botón "Registrar pago" en detalle de invoice prellena cliente y aplica todo el monto a esa factura
+- [ ] Indicador en detalle de cliente: "Tiene RD$X de anticipo sin aplicar" con CTA para aplicar a una factura
+
+### PDF Recibo de Ingreso
+
+- [ ] Template `apps/api/src/lib/pdf/payment-receipt.tsx`: recibo formal con número, cliente, monto en letras, método, fecha, lista de facturas aplicadas, firma
+- [ ] Endpoint `GET /v1/payments/:id/pdf` (reusa infra de PDFs existentes)
+- [ ] Botón "Descargar Recibo" en detalle de pago
+- [ ] Botón "Enviar Recibo por email/WhatsApp" (reusa infra de Fase 5)
+
+### Reportes
+
+- [ ] Endpoint `GET /v1/reports/collections?from=&to=&groupBy=customer|method|day`: cobros recibidos en período
+- [ ] Endpoint `GET /v1/reports/customer-balances`: por cliente — facturado, cobrado, balance pendiente, anticipos sin aplicar
+- [ ] Export CSV/Excel (reusa infra de Fase 5)
+- [ ] Estado de cuenta por cliente (Fase 5) ahora muestra applications con detalle de qué pago se aplicó a qué factura
+
+### Integración con dashboard y recordatorios
+
+- [ ] Widget "Cobros del mes" en `/dashboard` (suma de pagos en mes actual)
+- [ ] Cuentas por cobrar del dashboard sigue siendo correcto (se calcula igual: suma de `balance_due` de facturas)
+- [ ] Recordatorios de Fase 8 (worker) siguen funcionando — solo usan `invoice.balance_due` que ahora se calcula desde applications
+
+### Integración con asistente AI
+
+- [ ] Tool `register_payment`: recibe cliente, monto, método, opcional lista de facturas a aplicar. Si no se especifican, las aplica automáticamente a las facturas pendientes más antiguas
+- [ ] Tool `check_customer_balance`: consulta balance pendiente y anticipos sin aplicar de un cliente
+
+### Notas de ejecución
+
+_(Vacío hasta que se ejecute.)_
+
+---
+
+## FASE 7 — Integración con facturación electrónica (e-CF DGII)
+
+**Status:** ⏳ Pendiente
+**Iniciada:** —
+**Completada:** —
+**Estimación:** 3-4 semanas
+
+**Objetivo:** Conectar el ERP con `fiscal-platform` (monorepo externo en `/Users/ernestomendez/Software/fiscal-platform`) para emitir comprobantes fiscales electrónicos (e-CF) a la DGII. Este ERP **no implementa** generación de XML, firma con certificado, validación XSD ni protocolo DGII — toda esa lógica vive en la Cloud API de fiscal-platform. El ERP es el **cliente** que envía facturas en JSON, recibe estados (vía webhook), y muestra el ciclo de vida fiscal al usuario.
+
+**Tipos de documento soportados (e-CF):** B01 (crédito fiscal), B02 (consumo), B03 (nota de débito), B04 (nota de crédito), B14 (gubernamental), B15 (regímenes especiales), B16 (exportaciones).
+
+### Pre-requisitos (verificar antes de empezar)
+
+- [ ] `fiscal-platform/apps/cloud-api` tiene endpoints reales (no `501 Not Implemented`) para: `POST /documents/submit`, `GET /documents/:id/status`, `POST /documents/:id/cancel`
+- [ ] `fiscal-platform/packages/fiscal-core` orquesta el flujo build → validate → sign → submit → status
+- [ ] `fiscal-platform` soporta multi-tenant (cada business del ERP mapea a un tenant en fiscal-platform con su propio certificado digital, RNC, y modo test/prod)
+- [ ] Esquema de webhook desde fiscal-platform → ERP definido (payload, headers de firma HMAC)
+- [ ] Contratos (`@fiscal-platform/shared-contracts`) finalizados para `BasicInvoiceRequest`, `DocumentStatus`, etc.
+
+### Configuración fiscal por business
+
+- [ ] Migración: agregar a `businesses` las columnas `fiscal_enabled` (bool), `fiscal_platform_tenant_id` (string, mapping al tenant en fiscal-platform), `dgii_rnc` (validado), `dgii_operation_mode` (`test` | `production`), `fiscal_config` (JSONB para datos del emisor: razón social, dirección fiscal, teléfono)
+- [ ] Migración: tabla `ncf_sequences` con `business_id`, `document_type` (B01|B02|B03|B04|B14|B15|B16), `serie` (E31, E32, etc.), `next_number`, `range_start`, `range_end`, `is_active`, `valid_until` (fecha de vencimiento del rango DGII)
+- [ ] Función SQL `next_ncf(business_id, document_type)` ACID que retorna NCF formateado (`E3100000001`) y avanza el counter
+- [ ] UI en settings → nueva sección "Facturación electrónica": toggle activar, RNC, modo, gestión de rangos NCF (registrar nuevo rango, ver agotamiento), info del certificado (uploaded en fiscal-platform — solo lectura aquí con link al portal)
+- [ ] Validación: RNC con dígito verificador correcto antes de activar
+
+### Cliente HTTP a fiscal-platform
+
+- [ ] `apps/api/src/lib/fiscal-platform/client.ts`: cliente tipado con métodos `submitInvoice(payload)`, `getStatus(documentId)`, `cancelDocument(documentId, reason)`, `submitCreditNote(payload)`
+- [ ] Manejo de errores estructurado: errores de validación de fiscal-platform → mensajes accionables al usuario
+- [ ] Timeouts y retries con backoff (la submission inicial puede ser sync, el resultado DGII es async)
+- [ ] Env vars: `FISCAL_PLATFORM_BASE_URL`, `FISCAL_PLATFORM_API_KEY`, `FISCAL_PLATFORM_WEBHOOK_SECRET`
+- [ ] Mapper invoice del ERP → payload `BasicInvoiceRequest` de fiscal-platform (incluye líneas, impuestos, customer, RNC, NCF asignado por el ERP)
+
+### Flujo de emisión
+
+- [ ] Migración: extender `invoice.fiscal_metadata` con campos estructurados — `ecf_number` (NCF asignado), `ecf_type` (B01..B16), `track_id` (devuelto por DGII), `submission_status` (`not_submitted` | `submitted` | `accepted` | `rejected` | `in_review` | `cancelled`), `submitted_at`, `dgii_responded_at`, `dgii_response_code`, `dgii_response_message`, `rejection_reasons` (array)
+- [ ] En formulario de invoice: selector de tipo e-CF (default según customer — si tiene RNC válido sugiere B01, si no B02). Validación cruzada: B01 requiere customer con RNC válido
+- [ ] Endpoint `POST /v1/invoices/:id/emit-ecf`: valida data requerida (RNC del business, NCF disponible, customer con datos completos según tipo), asigna NCF de la secuencia, hace POST a fiscal-platform, guarda `track_id` + `submission_status=submitted`
+- [ ] No bloquear emisión normal: una invoice puede vivir en status `issued` sin e-CF. Emitir e-CF es acción aparte
+- [ ] Botón "Emitir e-CF" en detalle de invoice (solo si business.fiscal_enabled = true)
+- [ ] Alerta visible cuando NCF range tiene < 100 disponibles o vence en < 30 días
+
+### Webhook de estado desde fiscal-platform
+
+- [ ] Endpoint `POST /v1/webhooks/fiscal-platform`: recibe actualizaciones cuando DGII responde (segundos a minutos después del submit)
+- [ ] Validación HMAC con `FISCAL_PLATFORM_WEBHOOK_SECRET` (header `X-Signature`)
+- [ ] Tabla `webhook_events`: `id`, `source` (default `fiscal-platform`), `event_id` (UUID del evento de fiscal-platform), `payload` (JSONB), `received_at`, `processed_at`, `error_message`
+- [ ] Idempotencia: mismo `event_id` no se procesa dos veces (UNIQUE constraint)
+- [ ] Procesamiento: actualiza `invoice.fiscal_metadata` (status, dgii_response_code, dgii_responded_at, rejection_reasons)
+- [ ] Si rechazado: log en `audit_log` + notificación al owner del business (in-app + email opcional)
+
+### Notas de crédito y débito
+
+- [ ] Migración: tabla `credit_notes` (o reusar `invoices` con `document_type=credit_note`) con `original_invoice_id` (FK), `reason_code` (códigos DGII: 01=devolución, 02=descuento, 03=ajuste, 04=cobro indebido), `reason_text`
+- [ ] Misma estructura de líneas que invoice (qty puede ser negativa para devoluciones parciales)
+- [ ] Endpoint `POST /v1/invoices/:id/credit-notes`: emite nota de crédito sobre factura existente (la nota emite e-CF B04 referenciando NCF original)
+- [ ] Endpoint análogo para notas de débito (e-CF B03)
+- [ ] Integración con Fase 6 (Pagos): NC reduce `invoice.balance_due` (es equivalente a un pago no-cobrado). NC se trata como `payment_application` virtual con `source=credit_note`
+- [ ] UI: botón "Emitir nota de crédito" en detalle de invoice (solo si invoice tiene e-CF emitido y aceptado)
+
+### Cancelación de e-CF
+
+- [ ] Endpoint `POST /v1/invoices/:id/cancel-ecf`: válido solo si reglas DGII lo permiten (típicamente dentro de X horas o si DGII aún no aceptó)
+- [ ] fiscal-platform maneja la cancelación con DGII; ERP solo refleja resultado
+- [ ] Status `cancelled` no permite re-emitir e-CF sobre la misma invoice (hay que crear nueva)
+
+### PDF enriquecido con datos fiscales
+
+- [ ] Plantilla PDF de invoice incorpora: NCF, RNC del emisor, razón social oficial, fecha de emisión fiscal, código QR con link de verificación DGII, leyenda "Comprobante Fiscal Electrónico"
+- [ ] Diferenciación visual entre "Factura pro-forma" (sin e-CF) y "e-CF emitido y aceptado"
+- [ ] PDF de nota de crédito/débito con su propio formato y referencia al NCF original
+
+### Reportes de compliance DGII
+
+- [ ] **Reporte 606 (compras)**: agrupar `expenses` con `has_fiscal_receipt=true` por RNC del vendor + tipo de gasto, formato txt según especificación DGII. Endpoint `GET /v1/reports/dgii/606?period=YYYY-MM`
+- [ ] **Reporte 607 (ventas)**: facturas emitidas en período, agrupadas por tipo e-CF y RNC del customer, formato txt DGII. Endpoint `GET /v1/reports/dgii/607?period=YYYY-MM`
+- [ ] **Reporte 608 (anulados)**: e-CFs cancelados en período
+- [ ] **Reporte 609 (pagos al exterior)**: si aplica
+- [ ] UI en `/reports/dgii`: selector de período, descarga directa del txt formateado para upload en Oficina Virtual DGII
+
+### UI agregada
+
+- [ ] Badge de estado fiscal en lista y detalle de invoices: `Sin e-CF` (gris), `Enviado` (azul), `Aceptado` (verde), `Rechazado` (rojo), `Cancelado` (tachado)
+- [ ] Vista "Bandeja fiscal" en `/fiscal/inbox`: facturas con `submission_status=submitted` o `rejected` que requieren atención
+- [ ] Drill-down en detalle de invoice: respuesta cruda de DGII (código, mensaje, XML response link a fiscal-platform), historial de eventos (submitted/responded/cancelled)
+- [ ] Settings → "Facturación electrónica": gestión de rangos NCF, vencimientos, modo test/prod
+
+### Integración con asistente AI
+
+- [ ] Tool `emit_ecf`: emite e-CF de una factura existente (requiere confirmación si modo producción)
+- [ ] Tool `check_ecf_status`: consulta estado de e-CF de una factura
+- [ ] Tool `list_pending_ecf`: lista facturas con `submission_status=not_submitted` o `rejected`
+- [ ] Queries soportadas: "¿qué facturas tengo pendientes de emitir e-CF?", "¿cuántas facturas fueron rechazadas este mes?", "¿cuánto queda de mi rango NCF B02?"
+
+### Notas de ejecución
+
+_(Vacío hasta que se ejecute. Documentar especialmente: versión de contratos de fiscal-platform al integrar, decisiones sobre mapeo de campos, casos edge de validación DGII encontrados.)_
+
+---
+
+## FASE 8 — Worker, facturación recurrente y recordatorios
+
+**Status:** ⏳ Pendiente
+**Iniciada:** —
+**Completada:** —
+**Estimación:** 2-3 semanas
+
+**Objetivo:** Levantar el background job processor para soportar facturación recurrente (gimnasios, escuelas, mantenimiento, servicios profesionales) y recordatorios automáticos de cobro. Estos dos features son los que justifican el costo de operar un worker.
 
 ### Setup worker
 
@@ -352,11 +623,28 @@ _(Vacío hasta que se ejecute.)_
 - [ ] Worker registra handlers, hace polling de pg-boss
 - [ ] Manejo de retries y dead-letter
 
-### Primeros jobs candidatos (priorizar por necesidad real)
+### Facturación recurrente
 
-- [ ] `send-email`: cualquier email transaccional pasa por aquí en vez de directo desde el api
+- [ ] Migración: tabla `recurring_invoice_templates` con `business_id`, `customer_id`, `cadence` (monthly|weekly|quarterly|annual), `day_of_month` (o equivalente), `next_run_at`, `start_date`, `end_date` (opcional), `is_active`, `notes`, `terms`, `currency`, `default_payment_terms_days`
+- [ ] Migración: tabla `recurring_invoice_template_items` (mismo shape que invoice_items, sin totales calculados — se recalculan al generar)
+- [ ] Endpoints REST CRUD `/v1/recurring-invoices`
+- [ ] UI en `/recurring-invoices`: lista, crear/editar template (reusa componentes de invoice form), activar/pausar
+- [ ] Job `generate-recurring-invoices`: corre diariamente (cron de pg-boss), busca templates con `next_run_at <= today AND is_active`, genera invoice en estado `draft` (o `issued` si el business lo configura), actualiza `next_run_at`
+- [ ] Setting por business: "auto-emitir facturas recurrentes" (draft vs issued), "auto-enviar por email al cliente"
+
+### Recordatorios automáticos de cobro
+
+- [ ] Migración: tabla `reminder_rules` con `business_id`, `trigger_days` (negativo = antes del vencimiento, positivo = después), `channel` (email|whatsapp), `template`, `is_active`
+- [ ] Defaults sugeridos al crear business: recordatorio 3 días antes, día del vencimiento, 7 días después, 15 días después
+- [ ] Job `send-payment-reminders`: corre diariamente, busca facturas con balance_due > 0 cuyo `due_date + trigger_days = today`, encola un `send-email` o registra link de WhatsApp pendiente
+- [ ] Tabla `reminder_deliveries`: log de qué se mandó a quién y cuándo (evita duplicados)
+- [ ] UI en settings: configurar reglas + previsualizar template
+- [ ] Botón "Enviar recordatorio ahora" en detalle de factura overdue
+
+### Otros jobs en este worker
+
+- [ ] `send-email`: cualquier email transaccional pasa por aquí (incluye los emails de envío de factura de Fase 5 y de recibos de pago de Fase 6)
 - [ ] `generate-pdf`: si la latencia de PDFs grandes se vuelve problema visible
-- [ ] (Futuro) `recurring-invoice`: cuando se agregue feature de facturación recurrente
 
 ### Observability
 
@@ -370,7 +658,7 @@ _(Vacío hasta que se ejecute.)_
 
 ---
 
-## FASE 5 — Admin console (cuando exista equipo de soporte)
+## FASE 9 — Admin console (cuando exista equipo de soporte)
 
 **Status:** ⏳ Pendiente
 **Iniciada:** —
@@ -391,6 +679,64 @@ _(Vacío hasta que se ejecute.)_
 
 ---
 
+## FASE 10 — Inventario
+
+**Status:** ⏳ Pendiente
+**Iniciada:** —
+**Completada:** —
+**Estimación:** 2-3 semanas
+
+**Objetivo:** Habilitar control de stock para PyMEs que venden productos físicos (comercios, distribuidores, ferreterías). Productos de tipo `service` no son afectados. Alcance v1: un solo almacén por business, costo promedio simple, sin órdenes de compra (esas pueden venir después si se justifica).
+
+### Schema y migraciones
+
+- [ ] Migración: agregar a `products` las columnas `tracks_inventory` (bool, default false), `stock_quantity` (decimal), `reorder_point` (decimal), `unit_cost` (decimal, opcional)
+- [ ] Migración: tabla `inventory_movements` con `id`, `business_id`, `product_id`, `occurred_at`, `type` (`in` | `out` | `adjustment` | `opening_stock`), `quantity` (signed decimal), `reference_type` (`invoice` | `expense` | `manual` | `opening_stock`), `reference_id` (nullable), `unit_cost` (snapshot al momento del movimiento), `notes`, `created_by`
+- [ ] Índice en `inventory_movements (business_id, product_id, occurred_at)` para queries de historial
+- [ ] RLS por `business_id` (replicar patrón existente)
+- [ ] Función SQL `recalculate_product_stock(product_id)`: suma de movimientos → actualiza `products.stock_quantity` (counter cache)
+- [ ] Trigger o job que mantiene el counter cache consistente
+
+### Lógica de negocio en API
+
+- [ ] Al emitir invoice (status: draft → issued) con producto que `tracks_inventory`: crear movimiento `out` con qty negativa, `reference_type=invoice`
+- [ ] Setting por business: `allow_backorder` (bool). Si false y stock insuficiente al emitir → rechazar con 400 y mensaje claro
+- [ ] Al cancelar invoice: crear movimiento de reversa (`in` con qty positiva, mismo reference_id)
+- [ ] Convertir quotation → invoice NO afecta stock (solo al emitir la invoice resultante)
+- [ ] Endpoint `POST /v1/products/:id/stock-adjustments`: registrar ajuste manual con razón
+- [ ] Endpoint `POST /v1/products/:id/opening-stock`: cargar stock inicial al activar tracking (solo permitido si no hay movimientos previos)
+- [ ] Endpoint `GET /v1/products/:id/movements?from=&to=`: historial de movimientos
+- [ ] Endpoint `GET /v1/inventory/summary`: lista de productos con stock actual, valoración (`qty × unit_cost`), flag de low stock
+
+### UI
+
+- [ ] Formulario de producto: toggle "Llevar inventario" — al activar, abre input de stock inicial + reorder_point
+- [ ] Nueva sección `/inventory`: lista de productos con stock actual, valoración total, columna "low stock" destacada
+- [ ] Filtros: bajo stock, sin stock, sin movimiento en N días
+- [ ] Tab "Movimientos" en detalle de producto con timeline (tipo, qty, fecha, referencia clicable)
+- [ ] Modal "Ajustar stock" en producto: input de cantidad nueva o delta, razón obligatoria, registra movimiento `adjustment`
+- [ ] Validación en formulario de invoice: si producto tiene tracking y stock insuficiente, mostrar warning (bloquea emisión si `allow_backorder=false`)
+
+### Reportes e integración con dashboard
+
+- [ ] Widget en `/dashboard`: productos con stock bajo (count + drill-down)
+- [ ] Reporte de valoración de inventario (snapshot a fecha): `GET /v1/reports/inventory-valuation?as_of=`
+- [ ] Reporte de movimientos por producto/período: `GET /v1/reports/inventory-movements?from=&to=&product_id=`
+- [ ] Reporte de productos sin movimiento (slow movers): `GET /v1/reports/slow-movers?days=`
+- [ ] Export CSV/Excel en los tres reportes (reusa infra de Fase 5)
+
+### Integración con asistente AI
+
+- [ ] Tool `check_stock`: consultar stock actual de un producto por nombre/SKU
+- [ ] Tool `adjust_stock`: ajustar stock con razón (requiere confirmación por riesgo)
+- [ ] Soporte para queries tipo "¿qué productos están bajos en stock?" o "ajustar 10 unidades del producto X por daño"
+
+### Notas de ejecución
+
+_(Vacío hasta que se ejecute.)_
+
+---
+
 ## Variables de entorno (referencia final)
 
 | Variable | `web` | `api` | `worker` | Notas |
@@ -404,6 +750,9 @@ _(Vacío hasta que se ejecute.)_
 | `SENTRY_DSN` | ✅ | ✅ | ✅ | Distinto por servicio |
 | `AXIOM_TOKEN` | ✅ | ✅ | ✅ | Logs |
 | `API_URL` | ✅ | ❌ | ❌ | `http://api.railway.internal:8080` en prod |
+| `FISCAL_PLATFORM_BASE_URL` | ❌ | ✅ | ❌ | URL de Cloud API del fiscal-platform (Fase 7) |
+| `FISCAL_PLATFORM_API_KEY` | ❌ | ✅ | ❌ | Auth al fiscal-platform (Fase 7) |
+| `FISCAL_PLATFORM_WEBHOOK_SECRET` | ❌ | ✅ | ❌ | HMAC para validar webhooks entrantes (Fase 7) |
 | `PORT` | auto | auto | auto | Railway inyecta |
 
 ---
