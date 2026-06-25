@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@crm/db/server';
 import { formatMoney } from '@/lib/money/format';
 import type { Quotation, QuotationItem, QuotationStatus } from '@crm/contracts/quotation';
 import { StatusActions } from './status-actions';

@@ -1,5 +1,5 @@
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@crm/db/server';
 import type { CustomerOption } from './quotation-form';
 import type { ProductOption } from '@/components/forms/line-items-table';
 

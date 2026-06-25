@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { getTranslations } from 'next-intl/server';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@crm/db/server';
 import { QuotationPDF } from '@/lib/pdf/QuotationPDF';
 import type { Quotation, QuotationItem } from '@crm/contracts/quotation';
 

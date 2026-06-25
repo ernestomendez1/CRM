@@ -20,6 +20,9 @@ importers:
       '@crm/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@crm/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.4.0(react-hook-form@7.80.0(react@19.2.4))
@@ -136,6 +139,25 @@ importers:
       '@crm/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/db:
+    dependencies:
+      '@supabase/ssr':
+        specifier: ^0.10.3
+        version: 0.10.3(@supabase/supabase-js@2.108.2)
+      '@supabase/supabase-js':
+        specifier: ^2.106.1
+        version: 2.108.2
+    devDependencies:
+      '@crm/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      next:
+        specifier: 16.2.6
+        version: 16.2.6(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       typescript:
         specifier: ^5
         version: 5.9.3

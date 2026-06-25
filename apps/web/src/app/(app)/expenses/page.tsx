@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@crm/db/server';
 import { formatMoney } from '@/lib/money/format';
 
 const PAGE_SIZE = 25;

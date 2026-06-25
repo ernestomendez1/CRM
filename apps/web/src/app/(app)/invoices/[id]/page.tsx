@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@crm/db/server';
 import { formatMoney } from '@/lib/money/format';
 import type { Invoice, InvoiceItem, InvoiceStatus } from '@crm/contracts/invoice';
 import type { Payment } from '@crm/contracts/payment';

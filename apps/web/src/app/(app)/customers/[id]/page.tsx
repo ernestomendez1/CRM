@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@crm/db/server';
 import type { Customer } from '@crm/contracts/customer';
 import type { Quotation, QuotationStatus } from '@crm/contracts/quotation';
 import type { Invoice, InvoiceStatus } from '@crm/contracts/invoice';

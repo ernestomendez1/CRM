@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireBusiness } from '@/lib/auth/session';
 import { createCustomerRecord } from '@/lib/domain/customers';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@crm/db/server';
 import { customerSchema, type CustomerInput } from '@crm/contracts/customer';
 
 export type CustomerActionResult =

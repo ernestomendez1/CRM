@@ -1,0 +1,35 @@
+{
+  "name": "@crm/db",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./browser": "./src/browser.ts",
+    "./server": "./src/server.ts",
+    "./admin": "./src/admin.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "gen:types": "echo 'TODO: supabase gen types typescript --linked > src/types.ts (defer to Phase 2)'"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.106.1"
+  },
+  "peerDependencies": {
+    "next": "^16.0.0"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@crm/tsconfig": "workspace:*",
+    "next": "16.2.6",
+    "typescript": "^5"
+  }
+}

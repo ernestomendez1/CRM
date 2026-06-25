@@ -3,8 +3,8 @@
 import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@/lib/supabase/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createClient } from '@crm/db/server';
+import { createServiceClient } from '@crm/db/admin';
 import {
   numberingSchema,
   pdfSettingsSchema,

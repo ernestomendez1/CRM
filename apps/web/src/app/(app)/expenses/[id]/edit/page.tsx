@@ -4,7 +4,7 @@ import { ChevronLeft } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@crm/db/server';
 import type { Expense } from '@crm/contracts/expense';
 import { ExpenseForm } from '../../expense-form';
 import { updateExpense } from '../../actions';

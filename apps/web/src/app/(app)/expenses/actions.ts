@@ -5,8 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireBusiness, type CurrentContext } from '@/lib/auth/session';
 import { createExpenseRecord } from '@/lib/domain/expenses';
-import { createClient } from '@/lib/supabase/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createClient } from '@crm/db/server';
+import { createServiceClient } from '@crm/db/admin';
 import { expenseSchema, type ExpenseInput } from '@crm/contracts/expense';
 
 export type ExpenseActionResult =

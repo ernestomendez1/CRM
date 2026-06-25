@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@crm/db/server';
 import { getSession } from '@/lib/auth/session';
 import {
   canExtractExpenseReceipt,

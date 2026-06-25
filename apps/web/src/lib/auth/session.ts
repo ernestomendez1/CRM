@@ -1,6 +1,6 @@
 import 'server-only';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@crm/db/server';
 
 export async function getSession() {
   const supabase = await createClient();

@@ -4,7 +4,7 @@ import { ChevronLeft } from 'lucide-react';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@crm/db/server';
 import type { Quotation, QuotationItem } from '@crm/contracts/quotation';
 import { QuotationForm } from '../../quotation-form';
 import { updateQuotation } from '../../actions';

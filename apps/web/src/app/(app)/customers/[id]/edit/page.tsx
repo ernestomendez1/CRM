@@ -4,7 +4,7 @@ import { ChevronLeft } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@crm/db/server';
 import type { Customer } from '@crm/contracts/customer';
 import { CustomerForm } from '../../customer-form';
 import { updateCustomer } from '../../actions';
