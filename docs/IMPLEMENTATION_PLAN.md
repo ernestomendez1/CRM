@@ -86,97 +86,107 @@ Producto: CRM + ERP B2B multi-tenant para PyMEs en República Dominicana, con fa
 
 ## FASE 1 — Bones del monorepo + Railway
 
-**Status:** ⏳ Pendiente
-**Iniciada:** —
-**Completada:** —
+**Status:** ✅ Completada
+**Iniciada:** 2026-06-24
+**Completada:** 2026-06-24
 **Estimación:** 1-2 semanas
+**Real:** ~1 día (sesión enfocada)
 
 **Objetivo:** Producto funciona igual que hoy, pero corriendo en Railway desde una estructura monorepo con `apps/web` + `apps/api` scaffolded. Vercel apagado.
 
 ### Setup monorepo
 
-- [ ] Instalar pnpm global (`npm i -g pnpm@latest`)
-- [ ] Crear `pnpm-workspace.yaml` con `packages: ['apps/*', 'packages/*']`
-- [ ] Crear `turbo.json` con pipelines: `build`, `dev`, `lint`, `test`, `typecheck`
-- [ ] Mover `package.json` raíz a uno de workspaces con scripts turbo (`pnpm turbo build`, etc.)
-- [ ] `pnpm install` resuelve sin errores
+- [x] Instalar pnpm global (corepack: pnpm 11.9 en host, pnpm@9.15.0 pinned en `packageManager`)
+- [x] Crear `pnpm-workspace.yaml` con `packages: ['apps/*', 'packages/*']`
+- [x] Crear `turbo.json` con pipelines: `build`, `dev`, `lint`, `typecheck`, `test`
+- [x] Strip root `package.json` a monorepo-only (solo `turbo` en devDeps)
+- [x] `pnpm install` resuelve sin errores
 
 ### Mover frontend a apps/web
 
-- [ ] `git mv src apps/web/src`
-- [ ] `git mv public apps/web/public`
-- [ ] Mover `next.config.ts`, `tsconfig.json`, `postcss.config.*`, `eslint.config.*`, `vitest.config.*`, `components.json`, `tests/` → `apps/web/`
-- [ ] Crear `apps/web/package.json` con deps de UI/Next + scripts (`dev`, `build`, `start`, `test`)
-- [ ] Agregar `output: 'standalone'` en `apps/web/next.config.ts`
-- [ ] `pnpm --filter web dev` funciona localmente
-- [ ] `pnpm --filter web build` completa sin errores
-- [ ] Test suite verde: `pnpm --filter web test`
+- [x] `git mv src apps/web/src`
+- [x] `git mv public apps/web/public`
+- [x] Mover `next.config.ts`, `tsconfig.json`, `postcss.config.*`, `vitest.config.*`, `components.json`, `tests/` → `apps/web/` (eslint config se quedó en root como monorepo-wide)
+- [x] Crear `apps/web/package.json` con deps de UI/Next + scripts
+- [x] Agregar `output: 'standalone'` + `outputFileTracingRoot` en `apps/web/next.config.ts`
+- [x] `pnpm --filter @crm/web dev/build/test` todos verdes
+- [x] Actualizar `.gitignore` para ser monorepo-aware (paths sin `/` anclado)
 
 ### Extraer packages compartidos
 
-- [ ] `packages/contracts/`: mover `src/lib/validation/*.ts` (schemas Zod). Export: `@crm/contracts`
-- [ ] `packages/db/`: mover `src/lib/supabase/*.ts`. Tres exports: `@crm/db/browser`, `@crm/db/server`, `@crm/db/admin`
-- [ ] `packages/db/`: agregar Drizzle, generar schema desde Supabase, agregar script `pnpm --filter db gen:types`
-- [ ] `packages/core/`: extraer helpers de dominio puros desde `src/lib/domain/`
-- [ ] `packages/tsconfig/`: `base.json`, `nextjs.json`, `node.json` extendidos por cada app/package
-- [ ] Actualizar imports en `apps/web` a los nuevos paths
-- [ ] Test suite sigue verde
+- [x] `packages/tsconfig/`: `base.json`, `nextjs.json`, `node.json`
+- [x] `packages/contracts/`: 7 Zod schemas (customer, invoice, product, quotation, expense, payment, settings). Export `@crm/contracts/*`
+- [x] `packages/db/`: 4 archivos (types, browser, server, admin). Subpath exports `@crm/db/{browser,server,admin}` para evitar bundling server-only en browser. `next` como peerDep opcional (proxy.ts usa `next/headers`)
+- [x] `packages/core/`: solo money helpers (calc + format) + tests (26 tests)
+- [x] Actualizar imports en `apps/web` (48 imports validation, 30+ supabase, 4 money)
+- [x] Test suite sigue verde (44 tests: 26 core + 18 web)
+- [~] **Diferido a Phase 2**: Drizzle (sin endpoints API que se beneficien todavía); domain/, assistant/, ai/, openai/, pdf/, auth/ se quedaron en `apps/web/src/lib/` porque importan Supabase o Next.js directamente
 
 ### Scaffold apps/api
 
-- [ ] Crear `apps/api/package.json` con Hono, Zod, `@hono/zod-openapi`, `@hono/node-server`, vitest
-- [ ] `apps/api/src/index.ts`: bootstrap Hono + `serve({ port: process.env.PORT ?? 8080 })`
-- [ ] `apps/api/src/routes/health.ts`: `GET /healthz` retorna `{ ok: true }`
-- [ ] `apps/api/src/middleware/auth.ts`: extrae `Authorization: Bearer <jwt>`, verifica con Supabase, inyecta `ctx` (replica lógica de `src/lib/auth/session.ts:33-62`)
-- [ ] `apps/api/src/middleware/error.ts`: handler global que loggea + responde JSON estructurado
-- [ ] `pnpm --filter api dev` levanta servidor en localhost:8080
-- [ ] `curl http://localhost:8080/healthz` retorna 200
+- [x] Crear `apps/api/package.json` con Hono 4.10 + `@hono/zod-openapi` 1.4 + tsup + tsx + vitest
+- [x] `apps/api/src/index.ts`: bootstrap Hono + healthcheck `GET /healthz`
+- [x] `pnpm --filter @crm/api dev` levanta en localhost:8080
+- [x] `curl http://localhost:8080/healthz` retorna 200
+- [x] `pnpm --filter @crm/api build` produce `dist/index.js` (~450 B)
+- [~] **Diferido**: middleware/auth.ts, middleware/error.ts (vienen con las rutas de negocio en Phase 2)
 
 ### Dockerfiles
 
-- [ ] `apps/web/Dockerfile`: multi-stage (`deps` → `build` → `runner`), usa `turbo prune web --docker`, basado en `node:24.5-alpine`, `EXPOSE 3000`, CMD `node apps/web/server.js`
-- [ ] Agregar `apk add font-noto font-noto-emoji` en stage runner si web genera algún PDF; si todo PDF se mueve al api, omitir
-- [ ] `apps/api/Dockerfile`: multi-stage similar, `apk add font-noto font-noto-emoji` en runner (para `@react-pdf/renderer`), `EXPOSE 8080`, CMD `node apps/api/dist/index.js`
-- [ ] `docker build -t crm-web -f apps/web/Dockerfile .` completa localmente
-- [ ] `docker build -t crm-api -f apps/api/Dockerfile .` completa localmente
-- [ ] `docker run` de ambas imágenes levanta y responde healthcheck
+- [x] `.dockerignore` raíz
+- [x] `apps/web/Dockerfile`: multi-stage (pruner → installer → runner), `turbo prune @crm/web --docker`, Next.js standalone runtime. Imagen final 230 MB
+- [x] `apps/api/Dockerfile`: multi-stage similar + `pnpm deploy --prod` + fuentes `font-noto font-noto-emoji` para @react-pdf/renderer (Phase 2). Imagen 657 MB (optimizable con tsup bundling cuando llegue Phase 2)
+- [x] Build local de ambas imágenes OK, containers responden healthcheck
+- **Lección**: separar `deps` y `builder` en stages distintos rompe los symlinks de pnpm workspace → tsup no se encuentra. Hay que install+build en el mismo stage.
 
 ### docker-compose para dev local
 
-- [ ] Crear `docker-compose.yml` raíz con servicios `web` + `api`, ambos con `volumes` para hot-reload opcional
-- [ ] `docker compose up` levanta el stack completo con paridad de producción
+- [x] `docker-compose.yml` raíz con servicios `web` + `api`, ambos leen `env_file: .env.local`, `API_URL=http://api:8080`
 
 ### Setup Railway
 
-- [ ] Crear cuenta/team en railway.com si no existe
-- [ ] Crear nuevo proyecto "CRM Production"
-- [ ] Conectar GitHub repo
-- [ ] Agregar servicio `web`: Root Directory `apps/web`, Builder Dockerfile, Public Domain generado
-- [ ] Agregar servicio `api`: Root Directory `apps/api`, Builder Dockerfile, SIN public domain (solo private network)
-- [ ] Configurar env vars en `web`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `API_URL=http://api.railway.internal:8080`
-- [ ] Configurar env vars en `api`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_POOLER_URL`, `OPENAI_API_KEY`
-- [ ] Confirmar ambas regiones en `us-east` o `sa-east-1` (misma región para latencia mínima)
-- [ ] Push a `main` dispara auto-deploy exitoso de ambos servicios
-- [ ] Healthchecks pasan en Railway dashboard
+- [x] Proyecto: `keen-blessing` (`4bf78170-671c-4204-8559-8faeb376c0da`) — workspace "Ernesto Mendez's Projects"
+- [x] Repo conectado: `ernestomendez1/CRM`
+- [x] Servicio `web`: ID `6987d418-337f-4e8d-84c9-802727e481cd`, dominio público `https://web-production-9995f.up.railway.app`
+- [x] Servicio `api`: ID `103701db-29e7-4638-87b1-376e9b421ec0`, solo private network (`http://api.railway.internal:8080`)
+- [x] Dockerfile path configurado por servicio vía GraphQL `serviceInstanceUpdate` (CLI no tiene flag directo)
+- [x] Watch patterns configurados por servicio para builds incrementales
+- [x] Env vars seteadas en ambos servicios (`railway variables --skip-deploys --set`)
+- [x] Auto-deploy desde push a main funcionando
+- [x] Healthchecks pasan; ambos deploys SUCCESS
 
-### Observability básica
+### Observability básica (Sentry)
 
-- [ ] Crear cuenta Sentry; instalar `@sentry/nextjs` en web y `@sentry/node` en api
-- [ ] Configurar `SENTRY_DSN` (uno por servicio) en Railway
-- [ ] Disparar un error de prueba en cada servicio y verificar que llega a Sentry
+- [-] **Diferido**: No bloqueante para Phase 1. Agregar cuando aparezca el primer issue de producción.
 
 ### Cutover Vercel
 
-- [ ] Apuntar dominio custom (DNS) al servicio `web` de Railway
-- [ ] Supabase → Auth → URL Configuration: actualizar `Site URL` y `Redirect URLs` al nuevo dominio
-- [ ] Smoke test producción: login, crear customer, crear invoice, descargar PDF, usar asistente, extraer gasto
-- [ ] Borrar directorio `.vercel/` del repo (commit)
-- [ ] Pausar proyecto Vercel (no borrar todavía — backup 48h)
-- [ ] Después de 48h sin issues: borrar proyecto Vercel desde dashboard
+- [x] Dominio: usa generado por Railway (`*.up.railway.app`), sin dominio custom por ahora
+- [x] Supabase → Auth → URL Configuration: site_url + uri_allow_list actualizados vía Management API (PAT). Incluye Railway URL + localhost para dev local
+- [x] Smoke test producción OK: login, CRUD customer/product/invoice/quotation/expense, descarga PDFs, asistente AI (después de agregar OPENAI_API_KEY al web), extracción gasto, settings
+- [x] Borrar `.vercel/` del repo
+- [x] Vercel deployment ya borrado por el usuario antes de empezar
 
 ### Notas de ejecución
 
-_(Vacío hasta que se ejecute. Documentar decisiones tomadas, desviaciones del plan, blockers encontrados.)_
+**Refinamientos vs plan original:**
+- `packages/core` solo recibió `money/` (helpers puros). `domain/*`, `assistant/*`, `ai/*`, `openai/*`, `pdf/*`, `auth/*` se quedaron en `apps/web/src/lib/` porque importan Supabase o Next.js (no son lógica pura). Migran en Phase 2 junto con la separación de rutas API.
+- Drizzle diferido a Phase 2 (sin endpoints que se beneficien todavía).
+- `packages/auth` eliminado del scope (session.ts usa `next/navigation.redirect()` — acoplado a Next.js, vive en apps/web).
+
+**Sorpresas en ejecución:**
+1. **Railway IaC (`railway/iac`) tiene un bug con pnpm**: la importación se rompe con `?namespace=` query string ("Cannot find module ...?namespace=..."). Workaround: usar CLI directo + GraphQL para configurar Dockerfile path. Probado con `node-linker=hoisted` también — mismo bug. Reportable a railwayapp/cli.
+2. **Railway no tiene "DOCKERFILE" en su Builder enum** — solo `HEROKU`, `NIXPACKS`, `PAKETO`, `RAILPACK`. La forma correcta es setear `dockerfilePath` y Railpack lo respeta automáticamente. No hace falta cambiar el builder.
+3. **PORT inyectado por Railway no respeta el del Dockerfile**: hay que setear `PORT=3000` (web) y `PORT=8080` (api) explícitamente en env vars, sino el contenedor escucha en otro puerto que el dominio.
+4. **Env vars duplicadas web↔api**: `OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_POOLER_URL`, `OPENAI_EXPENSE_MODEL` están en AMBOS servicios durante Phase 1 porque las rutas en `apps/web/src/app/api/*` y los Server Actions todavía las usan. Quitar del web cuando Phase 2 migre esas rutas al api.
+5. **Hono + Zod 4**: `@hono/zod-openapi` 0.16.x requiere zod 3.x. Hay que usar 1.x line (>= 1.0). Hono también >= 4.10.0.
+6. **Servicios sin instancia**: cuando creas un servicio en el dashboard sin deployar, queda como "shell" a nivel proyecto pero sin `ServiceInstance` en el environment — el CLI no puede operarlo. Hay que crear vía dashboard+deployar, o usar `railway add --repo` que lo hace todo.
+7. **`railway add` ignora el proyecto linkeado**: cae en el último proyecto linkeado a CUALQUIER subdirectorio. Hay que `railway link` desde el directorio exacto donde corres `railway add`.
+
+**Pendientes para próxima sesión / TODO:**
+- Revocar el PAT de Supabase Management (`sbp_d8d6dd97...`) en https://supabase.com/dashboard/account/tokens y borrar `SUPABASE_ACCESS_TOKEN` de `.env.local`.
+- Setear región explícita en ambos servicios Railway (actualmente default — verificar latencia y mover a `us-east-4` si hace falta).
+- Sentry + Axiom (observability) cuando llegue el primer issue de producción.
 
 ---
 
