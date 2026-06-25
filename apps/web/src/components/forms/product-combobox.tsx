@@ -22,7 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ProductForm } from '@/app/(app)/products/product-form';
-import { createProductInline } from '@/app/(app)/products/actions';
+import { createProductInline, suggestProductSku } from '@/app/(app)/products/actions';
 
 export type ProductOption = {
   id: string;
@@ -44,7 +44,15 @@ export function ProductCombobox({ products, value, onChange, onCreated }: Props)
   const tc = useTranslations('common');
   const [popupOpen, setPopupOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [suggestedSku, setSuggestedSku] = useState<string>('');
   const selected = products.find((p) => p.id === value) ?? null;
+
+  async function openCreateDialog() {
+    setPopupOpen(false);
+    const sku = await suggestProductSku();
+    setSuggestedSku(sku ?? '');
+    setDialogOpen(true);
+  }
 
   return (
     <>
@@ -81,8 +89,7 @@ export function ProductCombobox({ products, value, onChange, onCreated }: Props)
                 <button
                   type="button"
                   onClick={() => {
-                    setPopupOpen(false);
-                    setDialogOpen(true);
+                    void openCreateDialog();
                   }}
                   className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-primary hover:bg-accent"
                 >
@@ -100,15 +107,18 @@ export function ProductCombobox({ products, value, onChange, onCreated }: Props)
           <DialogHeader>
             <DialogTitle>{t('createProduct')}</DialogTitle>
           </DialogHeader>
-          <ProductForm
-            action={createProductInline}
-            onSuccess={(state) => {
-              onCreated?.(state.data);
-              onChange(state.data.id);
-              setDialogOpen(false);
-              toast.success(t('productCreated'));
-            }}
-          />
+          {dialogOpen && (
+            <ProductForm
+              action={createProductInline}
+              defaultSku={suggestedSku}
+              onSuccess={(state) => {
+                onCreated?.(state.data);
+                onChange(state.data.id);
+                setDialogOpen(false);
+                toast.success(t('productCreated'));
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>

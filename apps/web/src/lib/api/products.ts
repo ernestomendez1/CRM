@@ -83,6 +83,9 @@ export async function getProduct(id: string): Promise<ApiResult<Product>> {
   return { ok: true, data: camelToSnake(res.data) };
 }
 
+export const getNextProductSku = () =>
+  apiGet<{ sku: string }>('/v1/products/next-sku');
+
 export const createProduct = (input: ProductInput) =>
   apiPost<{ id: string; name: string }>('/v1/products', input);
 

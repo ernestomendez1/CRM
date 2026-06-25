@@ -110,6 +110,12 @@ export async function updateProduct(
   redirect(`/products/${id}`);
 }
 
+export async function suggestProductSku(): Promise<string | null> {
+  await requireBusiness();
+  const res = await api.getNextProductSku();
+  return res.ok ? res.data.sku : null;
+}
+
 export async function deactivateProduct(id: string) {
   await requireBusiness();
   const res = await api.deactivateProduct(id);

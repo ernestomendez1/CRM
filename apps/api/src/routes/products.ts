@@ -60,6 +60,25 @@ route.get('/', async (c) => {
   return ok(c, { rows, count: countRows[0]?.count ?? 0, page, size });
 });
 
+route.get('/next-sku', async (c) => {
+  const ctx = getCtx(c);
+  const db = getDb();
+  const rows = await db
+    .select({
+      max: sql<number>`COALESCE(MAX((substring(${products.sku} from '^ART-(\\d+)$'))::int), 0)`,
+    })
+    .from(products)
+    .where(
+      and(
+        eq(products.businessId, ctx.businessId),
+        sql`${products.sku} ~ '^ART-\\d+$'`,
+      ),
+    );
+  const next = (rows[0]?.max ?? 0) + 1;
+  const sku = `ART-${String(next).padStart(3, '0')}`;
+  return ok(c, { sku });
+});
+
 route.get('/search', async (c) => {
   const ctx = getCtx(c);
   const url = new URL(c.req.url);

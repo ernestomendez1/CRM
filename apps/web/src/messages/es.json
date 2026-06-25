@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "CRM",
+    "appName": "Cuadra",
     "save": "Guardar",
     "cancel": "Cancelar",
     "delete": "Eliminar",
@@ -40,14 +40,14 @@
   },
   "assistant": {
     "launcher": "Asistente",
-    "title": "Asistente CRM",
+    "title": "Asistente",
     "subtitle": "Busque registros o prepare productos, clientes y gastos desde el chat.",
     "assistantLabel": "Asistente",
     "open": "Abrir asistente",
     "close": "Cerrar asistente",
     "emptyTitle": "Empiece con un comando directo",
     "emptyBody": "Pruebe “Crear un producto llamado Adobe Creative Cloud, precio 42.55 DOP, gravado” o “Buscar cliente Acme”.",
-    "placeholder": "Pregúntele al asistente del CRM…",
+    "placeholder": "Pregúntele al asistente…",
     "send": "Enviar",
     "thinking": "Pensando…",
     "reviewTitle": "Revise antes de confirmar",

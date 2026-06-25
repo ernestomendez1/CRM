@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "CRM",
+    "appName": "Cuadra",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -40,14 +40,14 @@
   },
   "assistant": {
     "launcher": "Assistant",
-    "title": "CRM Assistant",
+    "title": "Assistant",
     "subtitle": "Search records or prepare products, customers, and expenses from chat.",
     "assistantLabel": "Assistant",
     "open": "Open assistant",
     "close": "Close assistant",
     "emptyTitle": "Start with a direct command",
     "emptyBody": "Try “Create a product named Adobe Creative Cloud, price 42.55 DOP, taxable” or “Find customer Acme”.",
-    "placeholder": "Ask the CRM assistant…",
+    "placeholder": "Ask the assistant…",
     "send": "Send",
     "thinking": "Thinking…",
     "reviewTitle": "Review before confirm",

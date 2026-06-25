@@ -8,14 +8,14 @@ import { AssistantWidget } from '@/components/assistant/assistant-widget';
 const messages = {
   assistant: {
     launcher: 'Assistant',
-    title: 'CRM Assistant',
+    title: 'Assistant',
     subtitle: 'Search records or prepare products, customers, and expenses from chat.',
     assistantLabel: 'Assistant',
     open: 'Open assistant',
     close: 'Close assistant',
     emptyTitle: 'Start with a direct command',
     emptyBody: 'Try a command.',
-    placeholder: 'Ask the CRM assistant…',
+    placeholder: 'Ask the assistant…',
     send: 'Send',
     thinking: 'Thinking…',
     reviewTitle: 'Review before confirm',
@@ -94,7 +94,7 @@ describe('AssistantWidget', () => {
     renderWidget();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open assistant' }));
-    fireEvent.change(screen.getByPlaceholderText('Ask the CRM assistant…'), {
+    fireEvent.change(screen.getByPlaceholderText('Ask the assistant…'), {
       target: { value: 'Create Adobe Creative Cloud at 42.55 DOP' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));

@@ -1,8 +1,12 @@
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default async function DashboardPage() {
   const t = await getTranslations('dashboard');
+  const tq = await getTranslations('quotations');
 
   const cards = [
     { key: 'monthlyIncome', value: '—' },
@@ -13,9 +17,15 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('welcome')}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('welcome')}</p>
+        </div>
+        <Button render={<Link href="/quotations/new" />}>
+          <Plus className="h-4 w-4" />
+          {tq('newQuotation')}
+        </Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

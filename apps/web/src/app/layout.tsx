@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'CRM',
-  description: 'CRM and invoicing platform',
+  title: 'Cuadra',
+  description: 'Cuadra — facturación, gastos y clientes en un solo lugar',
 };
 
 export default async function RootLayout({

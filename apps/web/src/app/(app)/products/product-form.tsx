@@ -23,11 +23,18 @@ type FormResult =
 
 type Props<R extends FormResult> = {
   product?: Product;
+  /** Suggested SKU used only on create (when product?.sku is empty). */
+  defaultSku?: string;
   action: (prev: R | null, formData: FormData) => Promise<R>;
   onSuccess?: (state: Extract<R, { ok: true }>) => void;
 };
 
-export function ProductForm<R extends FormResult>({ product, action, onSuccess }: Props<R>) {
+export function ProductForm<R extends FormResult>({
+  product,
+  defaultSku,
+  action,
+  onSuccess,
+}: Props<R>) {
   const t = useTranslations('products');
   const tc = useTranslations('common');
   const [state, formAction, pending] = useActionState<R | null, FormData>(action, null);
@@ -82,7 +89,7 @@ export function ProductForm<R extends FormResult>({ product, action, onSuccess }
 
         <div className="space-y-1.5">
           <Label htmlFor="sku">{t('fields.sku')}</Label>
-          <Input id="sku" name="sku" defaultValue={product?.sku ?? ''} />
+          <Input id="sku" name="sku" defaultValue={product?.sku ?? defaultSku ?? ''} />
         </div>
 
         <div className="space-y-1.5">

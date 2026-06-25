@@ -1,5 +1,5 @@
 -- =====================================================================
--- CRM + Invoicing — Initial schema
+-- Cuadra — Initial schema
 -- All domain tables include business_id for multi-tenancy.
 -- RLS policies are defined in a separate migration.
 -- =====================================================================
