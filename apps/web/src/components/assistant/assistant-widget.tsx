@@ -374,7 +374,7 @@ export function AssistantWidget() {
                                   )}
                                   {'expense_date' in item && (
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                      {item.expense_date} · {item.currency} {item.total.toFixed(2)}
+                                      {item.expense_date} · {item.currency} {Number(item.total).toFixed(2)}
                                     </p>
                                   )}
                                 </div>

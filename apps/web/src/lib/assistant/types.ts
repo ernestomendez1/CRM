@@ -1,10 +1,43 @@
 import type { Locale } from '@/i18n/config';
-import type { CustomerInput } from '@crm/contracts/customer';
+import type { CustomerInput, TaxIdType } from '@crm/contracts/customer';
 import type { ExpenseInput } from '@crm/contracts/expense';
-import type { ProductInput } from '@crm/contracts/product';
-import type { CustomerSearchResult } from '@/lib/domain/customers';
-import type { ExpenseSearchResult } from '@/lib/domain/expenses';
-import type { ProductSearchResult } from '@/lib/domain/products';
+import type { ProductInput, ProductType } from '@crm/contracts/product';
+
+// Search result row shapes returned by the api's assistant search tools.
+// Kept inline so this types file has no dependency on the old @/lib/domain
+// modules (removed during Phase 2 cleanup).
+export type ProductSearchResult = {
+  id: string;
+  name: string;
+  sku: string | null;
+  type: ProductType;
+  unit_price: number | string;
+  is_taxable: boolean;
+  is_active: boolean;
+};
+
+export type CustomerSearchResult = {
+  id: string;
+  name: string;
+  company_name: string | null;
+  tax_id: string | null;
+  email: string | null;
+  phone: string | null;
+  is_active: boolean;
+  tax_id_type: TaxIdType | null;
+};
+
+export type ExpenseSearchResult = {
+  id: string;
+  vendor_name: string;
+  vendor_tax_id: string | null;
+  expense_date: string;
+  category: string | null;
+  total: number | string;
+  currency: string;
+  has_fiscal_receipt: boolean;
+  fiscal_receipt_number: string | null;
+};
 
 export type AssistantActionType = 'create_product' | 'create_customer' | 'create_expense';
 
