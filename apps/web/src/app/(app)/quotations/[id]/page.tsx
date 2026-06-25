@@ -14,9 +14,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
+import { getQuotation } from '@/lib/api/quotations';
 import { formatMoney } from '@crm/core/money';
-import type { Quotation, QuotationItem, QuotationStatus } from '@crm/contracts/quotation';
+import type { QuotationStatus } from '@crm/contracts/quotation';
 import { StatusActions } from './status-actions';
 
 const statusVariant: Record<QuotationStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -29,42 +29,17 @@ const statusVariant: Record<QuotationStatus, 'default' | 'secondary' | 'destruct
 
 export default async function QuotationDetailPage(props: PageProps<'/quotations/[id]'>) {
   const { id } = await props.params;
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('quotations');
   const tc = await getTranslations('common');
   const locale = await getLocale();
 
-  const [
-    { data: quotation, error: qErr },
-    { data: items, error: iErr },
-  ] = await Promise.all([
-    supabase
-      .from('quotations')
-      .select('*, customers(name, company_name, email, tax_id)')
-      .eq('id', id)
-      .eq('business_id', ctx.businessId)
-      .maybeSingle(),
-    supabase
-      .from('quotation_items')
-      .select('*')
-      .eq('quotation_id', id)
-      .order('sort_order'),
-  ]);
-
-  if (qErr) throw new Error(qErr.message);
-  if (iErr) throw new Error(iErr.message);
-  if (!quotation) notFound();
-
-  const q = quotation as unknown as Quotation & {
-    customers: {
-      name: string;
-      company_name: string | null;
-      email: string | null;
-      tax_id: string | null;
-    } | null;
-  };
-  const itemRows = (items ?? []) as unknown as QuotationItem[];
+  const res = await getQuotation(id);
+  if (!res.ok) {
+    if (res.error.includes('not found')) notFound();
+    throw new Error(res.error);
+  }
+  const { quotation: q, customer, items } = res.data;
 
   const fmt = (n: number) => formatMoney(Number(n), { currency: q.currency, locale });
   const canEdit = !q.converted_invoice_id;
@@ -111,13 +86,13 @@ export default async function QuotationDetailPage(props: PageProps<'/quotations/
           <CardContent className="space-y-1 py-4 text-sm">
             <p className="text-muted-foreground">{t('fields.customer')}</p>
             <p className="font-medium">
-              {q.customers?.company_name ?? q.customers?.name ?? '—'}
+              {customer.company_name ?? customer.name ?? '—'}
             </p>
-            {q.customers?.tax_id && (
-              <p className="text-xs text-muted-foreground">RNC/Cédula: {q.customers.tax_id}</p>
+            {customer.tax_id && (
+              <p className="text-xs text-muted-foreground">RNC/Cédula: {customer.tax_id}</p>
             )}
-            {q.customers?.email && (
-              <p className="text-xs text-muted-foreground">{q.customers.email}</p>
+            {customer.email && (
+              <p className="text-xs text-muted-foreground">{customer.email}</p>
             )}
           </CardContent>
         </Card>
@@ -152,7 +127,7 @@ export default async function QuotationDetailPage(props: PageProps<'/quotations/
             </TableRow>
           </TableHeader>
           <TableBody>
-            {itemRows.map((it) => (
+            {items.map((it) => (
               <TableRow key={it.id}>
                 <TableCell>{it.description}</TableCell>
                 <TableCell className="text-right tabular-nums">{Number(it.quantity)}</TableCell>

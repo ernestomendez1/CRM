@@ -7,6 +7,7 @@ import { authMiddleware, type AuthEnv, getCtx } from './middleware/auth';
 import { ok } from './lib/responses';
 import { customersRoute } from './routes/customers';
 import { productsRoute } from './routes/products';
+import { quotationsRoute } from './routes/quotations';
 import { settings } from './routes/settings';
 
 const app = new Hono<AuthEnv>();
@@ -35,6 +36,7 @@ v1.get('/me', (c) => {
 v1.route('/settings', settings);
 v1.route('/products', productsRoute);
 v1.route('/customers', customersRoute);
+v1.route('/quotations', quotationsRoute);
 
 app.route('/v1', v1);
 

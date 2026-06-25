@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@crm/contracts": "workspace:*",
+    "@crm/core": "workspace:^",
     "@crm/db": "workspace:*",
     "@hono/node-server": "^1.13.0",
     "@hono/zod-openapi": "^1.4.0",

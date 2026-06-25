@@ -17,6 +17,9 @@ importers:
       '@crm/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@crm/core':
+        specifier: workspace:^
+        version: link:../../packages/core
       '@crm/db':
         specifier: workspace:*
         version: link:../../packages/db

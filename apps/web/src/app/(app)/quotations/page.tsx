@@ -20,22 +20,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
+import { listQuotations } from '@/lib/api/quotations';
 import { formatMoney } from '@crm/core/money';
 import { quotationStatuses, type QuotationStatus } from '@crm/contracts/quotation';
 
 const PAGE_SIZE = 25;
-
-type Row = {
-  id: string;
-  quotation_number: string;
-  issue_date: string;
-  expiry_date: string | null;
-  status: QuotationStatus;
-  total: number;
-  currency: string;
-  customers: { name: string; company_name: string | null } | null;
-};
 
 const statusVariant: Record<QuotationStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   draft: 'secondary',
@@ -55,32 +44,19 @@ export default async function QuotationsPage(props: PageProps<'/quotations'>) {
       : null;
   const page = Math.max(1, Number(searchParams.page) || 1);
 
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('quotations');
   const tc = await getTranslations('common');
   const locale = await getLocale();
 
-  let query = supabase
-    .from('quotations')
-    .select(
-      'id, quotation_number, issue_date, expiry_date, status, total, currency, customers!inner(name, company_name)',
-      { count: 'exact' },
-    )
-    .eq('business_id', ctx.businessId)
-    .is('deleted_at', null)
-    .order('issue_date', { ascending: false })
-    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-
-  if (statusFilter) query = query.eq('status', statusFilter);
-  if (q.trim()) {
-    const term = `%${q.trim()}%`;
-    query = query.or(`quotation_number.ilike.${term},customers.name.ilike.${term}`);
-  }
-
-  const { data, error, count } = await query;
-  if (error) throw new Error(error.message);
-  const rows = (data ?? []) as unknown as Row[];
+  const res = await listQuotations({
+    q,
+    status: statusFilter ?? undefined,
+    page,
+    size: PAGE_SIZE,
+  });
+  if (!res.ok) throw new Error(res.error);
+  const { rows, count } = res.data;
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   return (
@@ -146,7 +122,7 @@ export default async function QuotationsPage(props: PageProps<'/quotations'>) {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    {r.customers?.company_name ?? r.customers?.name ?? '—'}
+                    {r.customer?.company_name ?? r.customer?.name ?? '—'}
                   </TableCell>
                   <TableCell>{r.issue_date}</TableCell>
                   <TableCell>{r.expiry_date ?? '—'}</TableCell>

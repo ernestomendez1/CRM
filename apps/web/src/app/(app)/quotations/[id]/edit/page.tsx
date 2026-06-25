@@ -4,46 +4,30 @@ import { ChevronLeft } from 'lucide-react';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
-import type { Quotation, QuotationItem } from '@crm/contracts/quotation';
+import { getQuotation } from '@/lib/api/quotations';
 import { QuotationForm } from '../../quotation-form';
 import { updateQuotation } from '../../actions';
 import { loadPickerData } from '../../data';
 
 export default async function EditQuotationPage(props: PageProps<'/quotations/[id]/edit'>) {
   const { id } = await props.params;
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('quotations');
   const tc = await getTranslations('common');
   const locale = await getLocale();
 
-  const [{ data: quotation, error: qErr }, { data: items, error: iErr }] = await Promise.all([
-    supabase
-      .from('quotations')
-      .select('*')
-      .eq('id', id)
-      .eq('business_id', ctx.businessId)
-      .is('deleted_at', null)
-      .maybeSingle(),
-    supabase
-      .from('quotation_items')
-      .select('*')
-      .eq('quotation_id', id)
-      .order('sort_order'),
-  ]);
-
-  if (qErr) throw new Error(qErr.message);
-  if (iErr) throw new Error(iErr.message);
-  if (!quotation) notFound();
-  const q = quotation as unknown as Quotation;
-
+  const res = await getQuotation(id);
+  if (!res.ok) {
+    if (res.error.includes('not found')) notFound();
+    throw new Error(res.error);
+  }
+  const { quotation: q, items } = res.data;
+  if (q.deleted_at) notFound();
   if (q.converted_invoice_id) {
-    // Already converted — cannot edit.
     redirect(`/quotations/${id}`);
   }
 
-  const itemRows = ((items ?? []) as unknown as QuotationItem[]).map((it) => ({
+  const itemRows = items.map((it) => ({
     product_id: it.product_id ?? undefined,
     description: it.description,
     quantity: Number(it.quantity),
