@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --env-file=.env.local src/index.ts",
     "build": "tsup src/index.ts --format esm --out-dir dist --clean --target node24",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
