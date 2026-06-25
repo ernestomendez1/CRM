@@ -15,10 +15,9 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
-import type { Customer } from '@crm/contracts/customer';
-import type { Quotation, QuotationStatus } from '@crm/contracts/quotation';
-import type { Invoice, InvoiceStatus } from '@crm/contracts/invoice';
+import { getCustomerOverview } from '@/lib/api/customers';
+import type { QuotationStatus } from '@crm/contracts/quotation';
+import type { InvoiceStatus } from '@crm/contracts/invoice';
 import { formatMoney } from '@crm/core/money';
 import { CustomerDangerActions } from './danger-actions';
 
@@ -50,8 +49,7 @@ function InfoRow({ label, value }: Row) {
 
 export default async function CustomerDetailPage(props: PageProps<'/customers/[id]'>) {
   const { id } = await props.params;
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('customers');
   const tq = await getTranslations('quotations');
   const ti = await getTranslations('invoices');
@@ -59,59 +57,12 @@ export default async function CustomerDetailPage(props: PageProps<'/customers/[i
   const tc = await getTranslations('common');
   const locale = await getLocale();
 
-  const [{ data, error }, { data: quotationsData }, { data: invoicesData }, { data: paymentsData }] =
-    await Promise.all([
-      supabase
-        .from('customers')
-        .select('*')
-        .eq('id', id)
-        .eq('business_id', ctx.businessId)
-        .maybeSingle(),
-      supabase
-        .from('quotations')
-        .select('id, quotation_number, issue_date, status, total, currency')
-        .eq('business_id', ctx.businessId)
-        .eq('customer_id', id)
-        .is('deleted_at', null)
-        .order('issue_date', { ascending: false }),
-      supabase
-        .from('invoices')
-        .select('id, invoice_number, issue_date, due_date, status, total, balance_due, currency')
-        .eq('business_id', ctx.businessId)
-        .eq('customer_id', id)
-        .is('deleted_at', null)
-        .order('issue_date', { ascending: false }),
-      supabase
-        .from('payments')
-        .select(
-          'id, payment_date, amount, method, reference, invoices!inner(id, invoice_number, customer_id)',
-        )
-        .eq('business_id', ctx.businessId)
-        .eq('invoices.customer_id', id)
-        .is('deleted_at', null)
-        .order('payment_date', { ascending: false }),
-    ]);
-
-  if (error) throw new Error(error.message);
-  if (!data) notFound();
-  const c = data as unknown as Customer;
-
-  const quotations = (quotationsData ?? []) as unknown as (Pick<
-    Quotation,
-    'id' | 'quotation_number' | 'issue_date' | 'status' | 'total' | 'currency'
-  >)[];
-  const invoices = (invoicesData ?? []) as unknown as (Pick<
-    Invoice,
-    'id' | 'invoice_number' | 'issue_date' | 'due_date' | 'status' | 'total' | 'balance_due' | 'currency'
-  >)[];
-  const payments = (paymentsData ?? []) as unknown as {
-    id: string;
-    payment_date: string;
-    amount: number;
-    method: string;
-    reference: string | null;
-    invoices: { id: string; invoice_number: string } | null;
-  }[];
+  const res = await getCustomerOverview(id);
+  if (!res.ok) {
+    if (res.error.includes('not found')) notFound();
+    throw new Error(res.error);
+  }
+  const { customer: c, quotations, invoices, payments } = res.data;
 
   return (
     <div className="space-y-4">
@@ -286,12 +237,12 @@ export default async function CustomerDetailPage(props: PageProps<'/customers/[i
                     <TableRow key={p.id}>
                       <TableCell>{p.payment_date}</TableCell>
                       <TableCell>
-                        {p.invoices ? (
+                        {p.invoice ? (
                           <Link
-                            href={`/invoices/${p.invoices.id}`}
+                            href={`/invoices/${p.invoice.id}`}
                             className="hover:underline"
                           >
-                            {p.invoices.invoice_number}
+                            {p.invoice.invoice_number}
                           </Link>
                         ) : (
                           '—'

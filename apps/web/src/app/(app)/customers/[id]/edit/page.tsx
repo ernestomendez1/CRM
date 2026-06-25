@@ -4,29 +4,23 @@ import { ChevronLeft } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
-import type { Customer } from '@crm/contracts/customer';
+import { getCustomer } from '@/lib/api/customers';
 import { CustomerForm } from '../../customer-form';
 import { updateCustomer } from '../../actions';
 
 export default async function EditCustomerPage(props: PageProps<'/customers/[id]/edit'>) {
   const { id } = await props.params;
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('customers');
   const tc = await getTranslations('common');
 
-  const { data, error } = await supabase
-    .from('customers')
-    .select('*')
-    .eq('id', id)
-    .eq('business_id', ctx.businessId)
-    .is('deleted_at', null)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  if (!data) notFound();
-  const customer = data as unknown as Customer;
+  const res = await getCustomer(id);
+  if (!res.ok) {
+    if (res.error.includes('not found')) notFound();
+    throw new Error(res.error);
+  }
+  const customer = res.data;
+  if (customer.deleted_at) notFound();
 
   const boundAction = updateCustomer.bind(null, id);
 

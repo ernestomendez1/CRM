@@ -3,8 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireBusiness } from '@/lib/auth/session';
-import { createCustomerRecord } from '@/lib/domain/customers';
-import { createClient } from '@crm/db/server';
+import * as api from '@/lib/api/customers';
 import { customerSchema, type CustomerInput } from '@crm/contracts/customer';
 
 export type CustomerActionResult =
@@ -43,19 +42,15 @@ export async function createCustomer(
   _prev: CustomerActionResult | null,
   formData: FormData,
 ): Promise<CustomerActionResult> {
-  const ctx = await requireBusiness();
+  await requireBusiness();
   const result = parseInput(formData);
   if ('_error' in result) return result._error;
 
-  let created: { id: string };
-  try {
-    created = await createCustomerRecord(ctx, result);
-  } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : 'Failed to create customer.' };
-  }
+  const res = await api.createCustomer(result);
+  if (!res.ok) return { ok: false, error: res.error, fieldErrors: res.fieldErrors };
 
   revalidatePath('/customers');
-  redirect(`/customers/${created.id}`);
+  redirect(`/customers/${res.data.id}`);
 }
 
 export async function updateCustomer(
@@ -63,18 +58,12 @@ export async function updateCustomer(
   _prev: CustomerActionResult | null,
   formData: FormData,
 ): Promise<CustomerActionResult> {
-  const ctx = await requireBusiness();
+  await requireBusiness();
   const result = parseInput(formData);
   if ('_error' in result) return result._error;
 
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('customers')
-    .update(result)
-    .eq('id', id)
-    .eq('business_id', ctx.businessId);
-
-  if (error) return { ok: false, error: error.message };
+  const res = await api.updateCustomer(id, result);
+  if (!res.ok) return { ok: false, error: res.error, fieldErrors: res.fieldErrors };
 
   revalidatePath('/customers');
   revalidatePath(`/customers/${id}`);
@@ -82,31 +71,17 @@ export async function updateCustomer(
 }
 
 export async function deactivateCustomer(id: string) {
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('customers')
-    .update({ deleted_at: new Date().toISOString(), is_active: false })
-    .eq('id', id)
-    .eq('business_id', ctx.businessId);
-
-  if (error) throw new Error(error.message);
-
+  await requireBusiness();
+  const res = await api.deactivateCustomer(id);
+  if (!res.ok) throw new Error(res.error);
   revalidatePath('/customers');
   revalidatePath(`/customers/${id}`);
 }
 
 export async function reactivateCustomer(id: string) {
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('customers')
-    .update({ deleted_at: null, is_active: true })
-    .eq('id', id)
-    .eq('business_id', ctx.businessId);
-
-  if (error) throw new Error(error.message);
-
+  await requireBusiness();
+  const res = await api.reactivateCustomer(id);
+  if (!res.ok) throw new Error(res.error);
   revalidatePath('/customers');
   revalidatePath(`/customers/${id}`);
 }

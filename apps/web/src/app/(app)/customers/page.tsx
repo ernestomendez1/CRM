@@ -13,19 +13,9 @@ import {
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
+import { listCustomers } from '@/lib/api/customers';
 
 const PAGE_SIZE = 25;
-
-type Customer = {
-  id: string;
-  name: string;
-  company_name: string | null;
-  tax_id: string | null;
-  email: string | null;
-  phone: string | null;
-  is_active: boolean;
-};
 
 export default async function CustomersPage(props: PageProps<'/customers'>) {
   const searchParams = await props.searchParams;
@@ -33,31 +23,14 @@ export default async function CustomersPage(props: PageProps<'/customers'>) {
   const page = Math.max(1, Number(searchParams.page) || 1);
   const showInactive = searchParams.inactive === '1';
 
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('customers');
   const tc = await getTranslations('common');
 
-  let query = supabase
-    .from('customers')
-    .select('id, name, company_name, tax_id, email, phone, is_active', { count: 'exact' })
-    .eq('business_id', ctx.businessId)
-    .is('deleted_at', null)
-    .order('name', { ascending: true })
-    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+  const res = await listCustomers({ q, page, size: PAGE_SIZE, includeInactive: showInactive });
+  if (!res.ok) throw new Error(res.error);
+  const { rows, count } = res.data;
 
-  if (!showInactive) {
-    query = query.eq('is_active', true);
-  }
-  if (q.trim()) {
-    const term = `%${q.trim()}%`;
-    query = query.or(`name.ilike.${term},company_name.ilike.${term},tax_id.ilike.${term}`);
-  }
-
-  const { data, error, count } = await query;
-  if (error) throw new Error(error.message);
-
-  const customers = (data ?? []) as Customer[];
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   return (
@@ -99,14 +72,14 @@ export default async function CustomersPage(props: PageProps<'/customers'>) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {customers.length === 0 ? (
+            {rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
                   {t('noCustomers')}
                 </TableCell>
               </TableRow>
             ) : (
-              customers.map((c) => (
+              rows.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">
                     <Link href={`/customers/${c.id}`} className="hover:underline">
