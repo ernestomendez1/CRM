@@ -2,51 +2,20 @@ import { getTranslations } from 'next-intl/server';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { requireBusiness } from '@/lib/auth/session';
-import { createClient } from '@crm/db/server';
+import { getSettings } from '@/lib/api/settings';
 import { ProfileForm } from './sections/profile-form';
 import { TaxForm } from './sections/tax-form';
 import { NumberingForm } from './sections/numbering-form';
 import { PdfForm } from './sections/pdf-form';
 import { LogoUploader } from './sections/logo-uploader';
 
-type BusinessRow = {
-  name: string;
-  legal_name: string | null;
-  tax_id: string | null;
-  email: string | null;
-  phone: string | null;
-  address: string | null;
-  city: string | null;
-  country: string | null;
-  logo_url: string | null;
-  default_currency: string;
-  default_tax_rate: number;
-  default_payment_terms_days: number;
-  invoice_prefix: string;
-  invoice_next_number: number;
-  quotation_prefix: string;
-  quotation_next_number: number;
-  pdf_settings: {
-    primary_color?: string;
-    footer_text?: string;
-    show_logo?: boolean;
-  } | null;
-};
-
 export default async function SettingsPage() {
-  const ctx = await requireBusiness();
-  const supabase = await createClient();
+  await requireBusiness();
   const t = await getTranslations('settings');
 
-  const { data, error } = await supabase
-    .from('businesses')
-    .select(
-      'name, legal_name, tax_id, email, phone, address, city, country, logo_url, default_currency, default_tax_rate, default_payment_terms_days, invoice_prefix, invoice_next_number, quotation_prefix, quotation_next_number, pdf_settings',
-    )
-    .eq('id', ctx.businessId)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  const b = (data ?? {}) as Partial<BusinessRow>;
+  const res = await getSettings();
+  if (!res.ok) throw new Error(res.error);
+  const b = res.data;
 
   const pdfDefaults = {
     primary_color: b.pdf_settings?.primary_color ?? '#1a1a1a',

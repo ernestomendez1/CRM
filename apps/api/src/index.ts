@@ -5,6 +5,7 @@ import { env } from './lib/env';
 import { errorHandler } from './middleware/error';
 import { authMiddleware, type AuthEnv, getCtx } from './middleware/auth';
 import { ok } from './lib/responses';
+import { settings } from './routes/settings';
 
 const app = new Hono<AuthEnv>();
 
@@ -28,6 +29,8 @@ v1.get('/me', (c) => {
     role: ctx.role,
   });
 });
+
+v1.route('/settings', settings);
 
 app.route('/v1', v1);
 
