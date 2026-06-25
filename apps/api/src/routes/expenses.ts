@@ -16,6 +16,8 @@ import { notFoundError, validationError } from '../lib/errors';
 import { created, noContent, ok } from '../lib/responses';
 import { getSupabaseStorage } from '../lib/supabase-storage';
 import { type AuthEnv, getCtx } from '../middleware/auth';
+import { loadBusinessDefaults } from '../domain/business';
+import { extractExpenseFromReceipt } from '../openai/expense-extraction';
 
 const route = new Hono<AuthEnv>();
 
@@ -128,6 +130,35 @@ route.delete('/:id/receipt', async (c) => {
   if (path) await deleteReceiptFile(path);
   await clearExpenseReceiptUrl(ctx, id);
   return noContent(c);
+});
+
+route.post('/extract', async (c) => {
+  const ctx = getCtx(c);
+  const form = await c.req.formData();
+  const file = form.get('receipt');
+  if (!(file instanceof File) || file.size === 0) {
+    return c.json({ ok: false, errorCode: 'invalid_file' }, 400);
+  }
+  const defaults = await loadBusinessDefaults(ctx);
+  const result = await extractExpenseFromReceipt(file, {
+    defaultCurrency: defaults.defaultCurrency,
+  });
+  if (!result.ok) {
+    const status =
+      result.errorCode === 'missing_api_key'
+        ? 503
+        : result.errorCode === 'provider_quota'
+          ? 429
+          : result.errorCode === 'provider_error' || result.errorCode === 'invalid_response'
+            ? 502
+            : 400;
+    return c.json({ ok: false, errorCode: result.errorCode }, status);
+  }
+  return c.json({
+    ok: true,
+    extracted: result.extracted,
+    warnings: result.warnings,
+  });
 });
 
 route.post('/:id/receipt-url', async (c) => {

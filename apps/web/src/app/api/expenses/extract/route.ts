@@ -1,116 +1,36 @@
+import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@crm/db/server';
-import { getSession } from '@/lib/auth/session';
-import {
-  canExtractExpenseReceipt,
-  type ExpenseExtractionWarningCode,
-} from '@/lib/ai/expense-extraction';
-import { extractExpenseFromReceipt } from '@/lib/openai/expense-extraction';
 
 export const dynamic = 'force-dynamic';
 
-type ExtractExpenseResponse =
-  | {
-      ok: true;
-      extracted: {
-        vendor_name: string | null;
-        vendor_tax_id: string | null;
-        expense_date: string | null;
-        category: string | null;
-        description: string | null;
-        subtotal: number | null;
-        tax_amount: number | null;
-        currency: string;
-        has_fiscal_receipt: boolean;
-        fiscal_receipt_number: string | null;
-      };
-      warnings: ExpenseExtractionWarningCode[];
-    }
-  | { ok: false; errorCode: string };
-
+/**
+ * Thin proxy to @crm/api's POST /v1/expenses/extract. We do not use
+ * api-client.apiPostForm here because the api returns its own non-ApiResult
+ * shape ({ ok, extracted, warnings } or { ok: false, errorCode }) and we
+ * want to forward it untouched to the expense-form widget.
+ */
 export async function POST(request: Request) {
-  const user = await getSession();
-  if (!user) {
-    return Response.json({ ok: false, errorCode: 'unauthorized' } satisfies ExtractExpenseResponse, {
-      status: 401,
-    });
-  }
-
-  const formData = await request.formData();
-  const file = formData.get('receipt');
-  if (!(file instanceof File) || file.size === 0) {
-    return Response.json({ ok: false, errorCode: 'invalid_file' } satisfies ExtractExpenseResponse, {
-      status: 400,
-    });
-  }
-
-  if (!canExtractExpenseReceipt(file.type)) {
-    return Response.json({ ok: false, errorCode: 'unsupported_type' } satisfies ExtractExpenseResponse, {
-      status: 400,
-    });
-  }
-
+  await requireBusiness();
   const supabase = await createClient();
-  const { data: membership, error: membershipError } = await supabase
-    .from('business_members')
-    .select('business_id')
-    .eq('user_id', user.id)
-    .limit(1)
-    .maybeSingle();
-
-  if (membershipError) {
-    return Response.json(
-      { ok: false, errorCode: 'membership_lookup_failed' } satisfies ExtractExpenseResponse,
-      {
-        status: 500,
-      },
-    );
+  const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+  if (sessionErr || !sessionData.session) {
+    return Response.json({ ok: false, errorCode: 'unauthorized' }, { status: 401 });
   }
-
-  if (!membership) {
-    return Response.json({ ok: false, errorCode: 'no_business' } satisfies ExtractExpenseResponse, {
-      status: 403,
+  const jwt = sessionData.session.access_token;
+  const form = await request.formData();
+  const apiUrl = process.env.API_URL ?? 'http://localhost:8080';
+  const response = await fetch(`${apiUrl}/v1/expenses/extract`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${jwt}` },
+    body: form,
+  });
+  const text = await response.text();
+  try {
+    return new Response(text, {
+      status: response.status,
+      headers: { 'Content-Type': 'application/json' },
     });
+  } catch {
+    return Response.json({ ok: false, errorCode: 'provider_error' }, { status: 502 });
   }
-
-  const businessId = (membership as { business_id: string }).business_id;
-  const { data: business, error: businessError } = await supabase
-    .from('businesses')
-    .select('default_currency')
-    .eq('id', businessId)
-    .maybeSingle();
-
-  if (businessError) {
-    return Response.json(
-      { ok: false, errorCode: 'business_lookup_failed' } satisfies ExtractExpenseResponse,
-      {
-        status: 500,
-      },
-    );
-  }
-
-  const defaultCurrency =
-    (business as { default_currency: string } | null)?.default_currency ?? 'DOP';
-  const result = await extractExpenseFromReceipt(file, { defaultCurrency });
-
-  if (!result.ok) {
-    const status =
-      result.errorCode === 'missing_api_key'
-        ? 503
-        : result.errorCode === 'provider_quota'
-          ? 429
-        : result.errorCode === 'provider_error' || result.errorCode === 'invalid_response'
-          ? 502
-          : 400;
-
-    return Response.json(
-      { ok: false, errorCode: result.errorCode },
-      { status },
-    );
-  }
-
-  return Response.json({
-    ok: true,
-    extracted: result.extracted,
-    warnings: result.warnings,
-  } satisfies ExtractExpenseResponse);
 }
