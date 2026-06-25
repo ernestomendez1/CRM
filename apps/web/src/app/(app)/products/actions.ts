@@ -10,6 +10,18 @@ export type ProductActionResult =
   | { ok: true }
   | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
 
+export type ProductOptionPayload = {
+  id: string;
+  name: string;
+  unit_price: number;
+  is_taxable: boolean;
+  tax_rate_override: number | null;
+};
+
+export type ProductCreatedResult =
+  | { ok: true; data: ProductOptionPayload }
+  | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
+
 function parseInput(formData: FormData): ProductInput | { _error: ProductActionResult } {
   const taxRateRaw = formData.get('tax_rate_override');
   const raw = {
@@ -50,6 +62,35 @@ export async function createProduct(
 
   revalidatePath('/products');
   redirect(`/products/${res.data.id}`);
+}
+
+export async function createProductInline(
+  _prev: ProductCreatedResult | null,
+  formData: FormData,
+): Promise<ProductCreatedResult> {
+  await requireBusiness();
+  const result = parseInput(formData);
+  if ('_error' in result) {
+    const err = result._error;
+    return err.ok
+      ? { ok: false, error: 'Validation failed' }
+      : { ok: false, error: err.error, fieldErrors: err.fieldErrors };
+  }
+
+  const res = await api.createProduct(result);
+  if (!res.ok) return { ok: false, error: res.error, fieldErrors: res.fieldErrors };
+
+  revalidatePath('/products');
+  return {
+    ok: true,
+    data: {
+      id: res.data.id,
+      name: result.name,
+      unit_price: Number(result.unit_price),
+      is_taxable: result.is_taxable,
+      tax_rate_override: result.tax_rate_override ?? null,
+    },
+  };
 }
 
 export async function updateProduct(

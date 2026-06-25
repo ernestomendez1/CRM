@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,25 +14,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { ProductActionResult } from './actions';
 import type { Product } from '@crm/contracts/product';
 import { productTypes } from '@crm/contracts/product';
 
-type Props = {
+type FormResult =
+  | { ok: true }
+  | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
+
+type Props<R extends FormResult> = {
   product?: Product;
-  action: (
-    prev: ProductActionResult | null,
-    formData: FormData,
-  ) => Promise<ProductActionResult>;
+  action: (prev: R | null, formData: FormData) => Promise<R>;
+  onSuccess?: (state: Extract<R, { ok: true }>) => void;
 };
 
-export function ProductForm({ product, action }: Props) {
+export function ProductForm<R extends FormResult>({ product, action, onSuccess }: Props<R>) {
   const t = useTranslations('products');
   const tc = useTranslations('common');
-  const [state, formAction, pending] = useActionState<ProductActionResult | null, FormData>(
-    action,
-    null,
-  );
+  const [state, formAction, pending] = useActionState<R | null, FormData>(action, null);
+
+  useEffect(() => {
+    if (state?.ok) onSuccess?.(state as Extract<R, { ok: true }>);
+  }, [state, onSuccess]);
 
   const err = (key: string) =>
     state && !state.ok && state.fieldErrors?.[key]?.[0] ? state.fieldErrors[key][0] : null;

@@ -5,15 +5,11 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { ProductCombobox, type ProductOption } from '@/components/forms/product-combobox';
 import { calculateTotals } from '@crm/core/money';
 import { formatMoney } from '@crm/core/money';
+
+export type { ProductOption } from '@/components/forms/product-combobox';
 
 export type LineItemRow = {
   product_id?: string;
@@ -22,14 +18,6 @@ export type LineItemRow = {
   unit_price: number;
   discount_pct: number;
   tax_rate: number;
-};
-
-export type ProductOption = {
-  id: string;
-  name: string;
-  unit_price: number;
-  is_taxable: boolean;
-  tax_rate_override: number | null;
 };
 
 type Props = {
@@ -41,6 +29,7 @@ type Props = {
   defaultTaxRate: number;
   currency: string;
   locale: string;
+  onProductCreated?: (product: ProductOption) => void;
 };
 
 function emptyRow(): LineItemRow {
@@ -60,6 +49,7 @@ export function LineItemsTable({
   defaultTaxRate,
   currency,
   locale,
+  onProductCreated,
 }: Props) {
   const t = useTranslations('quotations.lineItems');
   const [rows, setRows] = useState<LineItemRow[]>(
@@ -123,23 +113,12 @@ export function LineItemsTable({
               return (
                 <tr key={i} className="border-b last:border-b-0 align-top">
                   <td className="px-3 py-2">
-                    <Select
-                      value={row.product_id ?? ''}
-                      onValueChange={(v) => {
-                        if (typeof v === 'string' && v) applyProduct(i, v);
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="—" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <ProductCombobox
+                      products={products}
+                      value={row.product_id}
+                      onChange={(productId) => applyProduct(i, productId)}
+                      onCreated={onProductCreated}
+                    />
                   </td>
                   <td className="px-3 py-2">
                     <Input

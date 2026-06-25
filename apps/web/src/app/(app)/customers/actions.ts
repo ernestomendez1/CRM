@@ -10,6 +10,16 @@ export type CustomerActionResult =
   | { ok: true }
   | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
 
+export type CustomerOptionPayload = {
+  id: string;
+  name: string;
+  company_name: string | null;
+};
+
+export type CustomerCreatedResult =
+  | { ok: true; data: CustomerOptionPayload }
+  | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
+
 function parseInput(formData: FormData): CustomerInput | { _error: CustomerActionResult } {
   const raw = {
     name: formData.get('name'),
@@ -51,6 +61,33 @@ export async function createCustomer(
 
   revalidatePath('/customers');
   redirect(`/customers/${res.data.id}`);
+}
+
+export async function createCustomerInline(
+  _prev: CustomerCreatedResult | null,
+  formData: FormData,
+): Promise<CustomerCreatedResult> {
+  await requireBusiness();
+  const result = parseInput(formData);
+  if ('_error' in result) {
+    const err = result._error;
+    return err.ok
+      ? { ok: false, error: 'Validation failed' }
+      : { ok: false, error: err.error, fieldErrors: err.fieldErrors };
+  }
+
+  const res = await api.createCustomer(result);
+  if (!res.ok) return { ok: false, error: res.error, fieldErrors: res.fieldErrors };
+
+  revalidatePath('/customers');
+  return {
+    ok: true,
+    data: {
+      id: res.data.id,
+      name: result.name,
+      company_name: result.company_name ?? null,
+    },
+  };
 }
 
 export async function updateCustomer(

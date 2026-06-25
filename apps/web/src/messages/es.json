@@ -15,7 +15,8 @@
     "no": "No",
     "confirm": "Confirmar",
     "language": "Idioma",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "noResults": "Sin resultados"
   },
   "nav": {
     "dashboard": "Panel",
@@ -280,9 +281,12 @@
     "convertSuccess": "Factura creada.",
     "alreadyConverted": "Ya convertida a la factura #{number}.",
     "viewInvoice": "Ver factura",
+    "customerCreated": "Cliente creado.",
     "fields": {
       "quotationNumber": "Número",
       "customer": "Cliente",
+      "customerSearchPlaceholder": "Buscar cliente…",
+      "createCustomer": "Crear nuevo cliente",
       "issueDate": "Fecha de emisión",
       "expiryDate": "Fecha de vencimiento",
       "notes": "Notas",
@@ -294,6 +298,9 @@
       "title": "Ítems",
       "addRow": "Agregar fila",
       "product": "Producto",
+      "productSearchPlaceholder": "Buscar artículo…",
+      "createProduct": "Crear nuevo artículo",
+      "productCreated": "Artículo creado.",
       "description": "Descripción",
       "quantity": "Cant.",
       "unitPrice": "Precio unit.",

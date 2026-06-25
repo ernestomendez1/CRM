@@ -1,26 +1,20 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  LineItemsTable,
-  type LineItemRow,
-  type ProductOption,
-} from '@/components/forms/line-items-table';
+  CustomerCombobox,
+  type CustomerOption,
+} from '@/components/forms/customer-combobox';
+import { LineItemsTable, type LineItemRow } from '@/components/forms/line-items-table';
+import type { ProductOption } from '@/components/forms/product-combobox';
 import type { QuotationActionResult } from './actions';
 
-export type CustomerOption = { id: string; name: string; company_name: string | null };
+export type { CustomerOption } from '@/components/forms/customer-combobox';
 
 type Props = {
   customers: CustomerOption[];
@@ -43,8 +37,8 @@ type Props = {
 };
 
 export function QuotationForm({
-  customers,
-  products,
+  customers: customersProp,
+  products: productsProp,
   defaultTaxRate,
   currency,
   locale,
@@ -58,6 +52,9 @@ export function QuotationForm({
     null,
   );
 
+  const [customers, setCustomers] = useState<CustomerOption[]>(customersProp);
+  const [products, setProducts] = useState<ProductOption[]>(productsProp);
+
   const err = (key: string) =>
     state && !state.ok && state.fieldErrors?.[key]?.[0] ? state.fieldErrors[key][0] : null;
 
@@ -68,18 +65,14 @@ export function QuotationForm({
       <div className="grid gap-4 sm:grid-cols-2 max-w-4xl">
         <div className="space-y-1.5">
           <Label htmlFor="customer_id">{t('fields.customer')} *</Label>
-          <Select name="customer_id" defaultValue={defaults?.customer_id} required>
-            <SelectTrigger id="customer_id" className="w-full">
-              <SelectValue placeholder="—" />
-            </SelectTrigger>
-            <SelectContent>
-              {customers.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.company_name ? `${c.name} — ${c.company_name}` : c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CustomerCombobox
+            id="customer_id"
+            name="customer_id"
+            required
+            customers={customers}
+            defaultValue={defaults?.customer_id}
+            onCreated={(c) => setCustomers((prev) => [c, ...prev])}
+          />
           {err('customer_id') && <p className="text-xs text-red-600">{err('customer_id')}</p>}
         </div>
 
@@ -135,6 +128,7 @@ export function QuotationForm({
           currency={currency}
           locale={locale}
           initial={defaults?.items}
+          onProductCreated={(p) => setProducts((prev) => [p, ...prev])}
         />
         {err('items') && <p className="text-xs text-red-600 mt-1">{err('items')}</p>}
       </div>

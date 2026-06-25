@@ -15,7 +15,8 @@
     "no": "No",
     "confirm": "Confirm",
     "language": "Language",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "noResults": "No results"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -280,9 +281,12 @@
     "convertSuccess": "Invoice created.",
     "alreadyConverted": "Already converted into invoice #{number}.",
     "viewInvoice": "View invoice",
+    "customerCreated": "Customer created.",
     "fields": {
       "quotationNumber": "Number",
       "customer": "Customer",
+      "customerSearchPlaceholder": "Search customer…",
+      "createCustomer": "Create new customer",
       "issueDate": "Issue date",
       "expiryDate": "Expiry date",
       "notes": "Notes",
@@ -294,6 +298,9 @@
       "title": "Items",
       "addRow": "Add row",
       "product": "Product",
+      "productSearchPlaceholder": "Search article…",
+      "createProduct": "Create new article",
+      "productCreated": "Article created.",
       "description": "Description",
       "quantity": "Qty",
       "unitPrice": "Unit price",
