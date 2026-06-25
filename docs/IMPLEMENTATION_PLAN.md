@@ -27,7 +27,7 @@ Producto: CRM + ERP B2B multi-tenant para PyMEs en República Dominicana, con fa
 
 **Objetivo de esta migración:**
 1. Cortar Vercel y desplegar en Railway con Docker + auto-deploy desde GitHub.
-2. Reestructurar a monorepo con frontend y backend separados (`apps/web` Next.js + `apps/api` Hono), preparando la base para múltiples consumidores futuros (móvil, partners B2B, admin console).
+2. Reestructurar a monorepo con frontend y backend separados (`apps/web` Next.js + `apps/api` Hono), preparando la base para una posible consola interna de admin y otros consumidores que aparezcan más adelante.
 3. Preservar 100% del código de dominio existente. Cero reescritura.
 
 ---
@@ -37,8 +37,8 @@ Producto: CRM + ERP B2B multi-tenant para PyMEs en República Dominicana, con fa
 | Decisión | Elección | Razón |
 | --- | --- | --- |
 | Monorepo tooling | pnpm workspaces + Turborepo | Estándar TS, builds en paralelo, optimizado para Docker con `turbo prune`. |
-| Backend framework | Hono + Zod + `@hono/zod-openapi` | Liviano, streaming nativo (asistente AI), OpenAPI auto-generado → SDKs para partners futuros. |
-| API style | REST versionado (`/v1`) | Compatible con cualquier consumidor (web, móvil, partners). |
+| Backend framework | Hono + Zod + `@hono/zod-openapi` | Liviano, streaming nativo (asistente AI), OpenAPI auto-generado. |
+| API style | REST versionado (`/v1`) | Compatible con cualquier consumidor web o backend que aparezca después. |
 | ORM | Drizzle sobre supabase-js | Queries type-safe, mejor DX que raw SQL. supabase-js se mantiene para auth/storage. |
 | Auth usuarios | Supabase Auth + JWT forward al API | API verifica JWT y usa cliente Supabase con ese token → RLS sigue aplicando. |
 | Comunicación web↔api | BFF sobre Railway Private Network | Next.js es lo único expuesto. Llama API por `http://api.railway.internal:8080`. |
@@ -233,7 +233,7 @@ Orden sugerido (menor a mayor riesgo):
 #### Invoices
 - [ ] Endpoints REST `/v1/invoices` (CRUD + emisión + cambio de estado)
 - [ ] Migrar acciones de invoices
-- [ ] Confirmar que `fiscal_metadata` JSONB sigue siendo escribible (cliente fiscal externo se agregará en Fase 5)
+- [ ] Confirmar que `fiscal_metadata` JSONB sigue siendo escribible (la integración fiscal externa se trabajará a futuro, fuera del scope actual del plan)
 - [ ] Tests verdes
 
 #### Expenses
@@ -370,74 +370,7 @@ _(Vacío hasta que se ejecute.)_
 
 ---
 
-## FASE 5 — API pública + SDK + integración fiscal
-
-**Status:** ⏳ Pendiente
-**Iniciada:** —
-**Completada:** —
-**Estimación:** 2-3 semanas
-
-**Objetivo:** Exponer el API a partners externos con autenticación por API key, SDK auto-generado, docs públicos. Conectar la plataforma fiscal externa.
-
-### API pública
-
-- [ ] Habilitar dominio público `api.tudominio.com` en servicio Railway `api`
-- [ ] Migración: tabla `api_keys` con `id`, `business_id`, `key_hash`, `name`, `created_by`, `last_used_at`, `revoked_at`
-- [ ] Middleware `apiKeyAuth` en api: alternativo a JWT, autentica por `X-API-Key` header
-- [ ] UI en settings: lista de keys + crear/revocar (la key se muestra solo una vez al crear)
-- [ ] Rate limiting por API key (memoria local primero, Redis cuando escale)
-
-### SDK auto-generado
-
-- [ ] `packages/sdk-ts/`: generado desde `apps/api/openapi.json` via `openapi-typescript-codegen` o `orval`
-- [ ] CI publica nueva versión del SDK a npm privado cuando OpenAPI spec cambia
-- [ ] README del SDK con ejemplos
-
-### Docs públicos
-
-- [ ] Setup Mintlify o Scalar apuntando al OpenAPI spec
-- [ ] Dominio `docs.tudominio.com`
-- [ ] Guías de "Getting started" + ejemplos por endpoint
-
-### Integración plataforma fiscal externa
-
-- [ ] `apps/api/src/lib/fiscal-client.ts`: cliente HTTP a la plataforma fiscal (usa `FISCAL_PLATFORM_BASE_URL` + `FISCAL_PLATFORM_API_KEY`)
-- [ ] Endpoint `POST /v1/invoices/:id/emit`: invoca cliente fiscal, guarda response en `fiscal_metadata`
-- [ ] Endpoint `POST /v1/webhooks/fiscal`: recibe actualizaciones de estado desde plataforma fiscal
-- [ ] Tabla `webhook_events`: `id`, `source`, `event_id`, `payload`, `received_at`, `processed_at` (idempotencia)
-- [ ] Validación HMAC del webhook (header `X-Signature`)
-- [ ] Worker job `process-fiscal-webhook` (si hay procesamiento pesado) o procesamiento sync si es simple
-- [ ] UI: badge de estado fiscal en detalle de invoice, polling o realtime para actualizaciones
-
-### Notas de ejecución
-
-_(Vacío hasta que se ejecute.)_
-
----
-
-## FASE 6 — App móvil (cuando el negocio lo demande)
-
-**Status:** ⏳ Pendiente
-**Iniciada:** —
-**Completada:** —
-**Estimación:** 8-12 semanas
-
-**Objetivo:** App nativa iOS + Android para owners/vendedores que facturan desde el teléfono.
-
-- [ ] `apps/mobile/` con Expo (React Native)
-- [ ] Consume el mismo API REST (mismo SDK que partners)
-- [ ] Comparte `packages/contracts` y `packages/core`
-- [ ] Auth con Supabase Auth (deep links)
-- [ ] Funcionalidad mínima viable: ver facturas, crear factura rápida, capturar gasto con cámara, ver clientes
-- [ ] Distribución via TestFlight + Play Store
-
-### Notas de ejecución
-
-_(Vacío hasta que se ejecute.)_
-
----
-
-## FASE 7 — Admin console (cuando exista equipo de soporte)
+## FASE 5 — Admin console (cuando exista equipo de soporte)
 
 **Status:** ⏳ Pendiente
 **Iniciada:** —
@@ -471,8 +404,6 @@ _(Vacío hasta que se ejecute.)_
 | `SENTRY_DSN` | ✅ | ✅ | ✅ | Distinto por servicio |
 | `AXIOM_TOKEN` | ✅ | ✅ | ✅ | Logs |
 | `API_URL` | ✅ | ❌ | ❌ | `http://api.railway.internal:8080` en prod |
-| `FISCAL_PLATFORM_BASE_URL` | ❌ | ✅ | ❌ | Fase 5+ |
-| `FISCAL_PLATFORM_API_KEY` | ❌ | ✅ | ❌ | Fase 5+ |
 | `PORT` | auto | auto | auto | Railway inyecta |
 
 ---
@@ -481,7 +412,7 @@ _(Vacío hasta que se ejecute.)_
 
 - ❌ Reescribir desde cero. Refactor preserva lógica probada.
 - ❌ NestJS. Demasiado opinionado, ecosistema TS en RD/LATAM más pequeño.
-- ❌ tRPC. Encierra en TS end-to-end, no sirve para móvil nativo ni partners.
+- ❌ tRPC. Encierra en TS end-to-end, limita opciones de consumidores futuros.
 - ❌ Prisma. No juega bien con Supabase RLS. Drizzle es superior.
 - ❌ Microservicios desde día 1. Monolito modular en monorepo, extraer cuando un servicio tenga perfil de carga radicalmente distinto.
 - ❌ Kubernetes. Railway/Fly cubren tus necesidades por años.
