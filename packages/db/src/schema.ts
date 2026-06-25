@@ -42,6 +42,13 @@ export const businesses = pgTable('businesses', {
   quotationPrefix: text('quotation_prefix').notNull().default('QUO-'),
   quotationNextNumber: integer('quotation_next_number').notNull().default(1),
   pdfSettings: jsonb('pdf_settings').notNull().default(sql`'{}'::jsonb`),
+  // Phase 3: subscription state
+  subscriptionStatus: text('subscription_status').notNull().default('trial'),
+  trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
+  currentPeriodEndsAt: timestamp('current_period_ends_at', { withTimezone: true }),
+  monthlyPriceDop: decimal('monthly_price_dop', { precision: 14, scale: 2 }),
+  pastDueSince: timestamp('past_due_since', { withTimezone: true }),
+  cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -429,6 +436,81 @@ export const auditLog = pgTable(
   }),
 );
 
+// =====================================================================
+// Phase 3: commercial layer (staff, leads, billing audit)
+// =====================================================================
+
+export const staffUsers = pgTable('staff_users', {
+  userId: uuid('user_id').primaryKey(),
+  role: text('role').notNull().default('admin'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const leads = pgTable(
+  'leads',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    businessName: text('business_name').notNull(),
+    contactName: text('contact_name').notNull(),
+    email: text('email').notNull(),
+    phone: text('phone'),
+    rnc: text('rnc'),
+    employeesBand: text('employees_band'),
+    currentTool: text('current_tool'),
+    interestNote: text('interest_note'),
+    status: text('status').notNull().default('pending'),
+    reviewedBy: uuid('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    reviewNotes: text('review_notes'),
+    convertedBusinessId: uuid('converted_business_id').references(
+      () => businesses.id,
+    ),
+    turnstileOk: boolean('turnstile_ok').notNull().default(false),
+    sourceIp: text('source_ip'),
+    userAgent: text('user_agent'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    statusIdx: index('leads_status_idx').on(t.status, t.createdAt),
+    emailIdx: index('leads_email_idx').on(t.email),
+  }),
+);
+
+export const billingEvents = pgTable(
+  'billing_events',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => businesses.id, { onDelete: 'restrict' }),
+    kind: text('kind').notNull(),
+    amountDop: decimal('amount_dop', { precision: 14, scale: 2 }),
+    periodExtendedTo: timestamp('period_extended_to', { withTimezone: true }),
+    notes: text('notes'),
+    actorUserId: uuid('actor_user_id'),
+    occurredAt: timestamp('occurred_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    businessIdx: index('billing_events_business_idx').on(
+      t.businessId,
+      t.occurredAt,
+    ),
+  }),
+);
+
 // Convenience types
 export type Business = typeof businesses.$inferSelect;
 export type NewBusiness = typeof businesses.$inferInsert;
@@ -450,3 +532,9 @@ export type NewPayment = typeof payments.$inferInsert;
 export type Expense = typeof expenses.$inferSelect;
 export type NewExpense = typeof expenses.$inferInsert;
 export type AuditLog = typeof auditLog.$inferSelect;
+export type StaffUser = typeof staffUsers.$inferSelect;
+export type NewStaffUser = typeof staffUsers.$inferInsert;
+export type Lead = typeof leads.$inferSelect;
+export type NewLead = typeof leads.$inferInsert;
+export type BillingEvent = typeof billingEvents.$inferSelect;
+export type NewBillingEvent = typeof billingEvents.$inferInsert;
