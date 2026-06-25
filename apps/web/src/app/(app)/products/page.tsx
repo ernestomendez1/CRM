@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@crm/db/server';
-import { formatMoney } from '@/lib/money/format';
+import { formatMoney } from '@crm/core/money';
 
 const PAGE_SIZE = 25;
 

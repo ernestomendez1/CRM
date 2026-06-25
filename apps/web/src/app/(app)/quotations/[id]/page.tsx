@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@crm/db/server';
-import { formatMoney } from '@/lib/money/format';
+import { formatMoney } from '@crm/core/money';
 import type { Quotation, QuotationItem, QuotationStatus } from '@crm/contracts/quotation';
 import { StatusActions } from './status-actions';
 

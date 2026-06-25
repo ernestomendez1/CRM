@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@crm/db/server';
-import { formatMoney } from '@/lib/money/format';
+import { formatMoney } from '@crm/core/money';
 import type { Expense } from '@crm/contracts/expense';
 import { ExpenseActions } from './expense-actions';
 import { getReceiptSignedUrl } from '../actions';

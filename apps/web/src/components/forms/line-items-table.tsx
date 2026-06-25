@@ -12,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { calculateTotals } from '@/lib/money/calc';
-import { formatMoney } from '@/lib/money/format';
+import { calculateTotals } from '@crm/core/money';
+import { formatMoney } from '@crm/core/money';
 
 export type LineItemRow = {
   product_id?: string;

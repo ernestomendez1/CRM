@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@crm/db/server';
-import { calculateTotals } from '@/lib/money/calc';
+import { calculateTotals } from '@crm/core/money';
 import {
   quotationSchema,
   quotationStatuses,

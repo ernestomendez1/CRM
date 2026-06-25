@@ -19,7 +19,7 @@ import { createClient } from '@crm/db/server';
 import type { Customer } from '@crm/contracts/customer';
 import type { Quotation, QuotationStatus } from '@crm/contracts/quotation';
 import type { Invoice, InvoiceStatus } from '@crm/contracts/invoice';
-import { formatMoney } from '@/lib/money/format';
+import { formatMoney } from '@crm/core/money';
 import { CustomerDangerActions } from './danger-actions';
 
 const quotationStatusVariant: Record<QuotationStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {

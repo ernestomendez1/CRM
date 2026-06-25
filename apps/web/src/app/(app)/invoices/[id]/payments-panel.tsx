@@ -31,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatMoney } from '@/lib/money/format';
+import { formatMoney } from '@crm/core/money';
 import { paymentMethods, type PaymentMethod } from '@crm/contracts/payment';
 import { addPayment, deletePayment, type PaymentActionResult } from '../actions';
 

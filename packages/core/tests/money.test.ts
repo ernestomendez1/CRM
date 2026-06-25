@@ -4,8 +4,8 @@ import {
   calculateLine,
   calculateTotals,
   roundMoney,
-} from '@/lib/money/calc';
-import { formatMoney, formatPercent } from '@/lib/money/format';
+} from '../src/money/calc';
+import { formatMoney, formatPercent } from '../src/money/format';
 
 describe('roundMoney (banker\'s)', () => {
   it('rounds halfway to even', () => {

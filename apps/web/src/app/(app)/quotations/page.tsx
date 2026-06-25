@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@crm/db/server';
-import { formatMoney } from '@/lib/money/format';
+import { formatMoney } from '@crm/core/money';
 import { quotationStatuses, type QuotationStatus } from '@crm/contracts/quotation';
 
 const PAGE_SIZE = 25;

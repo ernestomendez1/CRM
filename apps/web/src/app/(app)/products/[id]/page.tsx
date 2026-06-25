@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@crm/db/server';
 import type { Product } from '@crm/contracts/product';
-import { formatMoney, formatPercent } from '@/lib/money/format';
+import { formatMoney, formatPercent } from '@crm/core/money';
 import { ProductDangerActions } from './danger-actions';
 
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireBusiness } from '@/lib/auth/session';
 import { createClient } from '@crm/db/server';
-import { applyPayments, calculateTotals } from '@/lib/money/calc';
+import { applyPayments, calculateTotals } from '@crm/core/money';
 import {
   invoiceSchema,
   type InvoiceInput,
