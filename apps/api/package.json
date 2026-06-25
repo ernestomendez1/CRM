@@ -8,7 +8,7 @@
     "build": "tsup src/index.ts --format esm --out-dir dist --clean --target node24",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@crm/contracts": "workspace:*",
