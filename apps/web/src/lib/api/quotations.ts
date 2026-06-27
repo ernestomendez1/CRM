@@ -107,12 +107,14 @@ export async function listQuotations(params: {
   status?: QuotationStatus;
   page?: number;
   size?: number;
+  availableForInvoice?: boolean;
 }): Promise<ApiResult<QuotationList>> {
   const sp = new URLSearchParams();
   if (params.q) sp.set('q', params.q);
   if (params.status) sp.set('status', params.status);
   if (params.page) sp.set('page', String(params.page));
   if (params.size) sp.set('size', String(params.size));
+  if (params.availableForInvoice) sp.set('available_for_invoice', 'true');
   const qs = sp.toString();
   return apiGet<QuotationList>(`/v1/quotations${qs ? `?${qs}` : ''}`);
 }

@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, isNull, notInArray, or, sql } from 'drizzle-orm';
 import {
   businesses,
   customers,
@@ -316,7 +316,13 @@ export type QuotationListRow = {
 
 export async function listQuotations(
   ctx: Ctx,
-  params: { q?: string; status?: QuotationStatus; page: number; size: number },
+  params: {
+    q?: string;
+    status?: QuotationStatus;
+    page: number;
+    size: number;
+    availableForInvoice?: boolean;
+  },
 ): Promise<{ rows: QuotationListRow[]; count: number }> {
   const db = getDb();
   const conditions = [
@@ -324,6 +330,10 @@ export async function listQuotations(
     isNull(quotations.deletedAt),
   ];
   if (params.status) conditions.push(eq(quotations.status, params.status));
+  if (params.availableForInvoice) {
+    conditions.push(isNull(quotations.convertedInvoiceId));
+    conditions.push(notInArray(quotations.status, ['rejected', 'expired']));
+  }
   if (params.q?.trim()) {
     const term = `%${params.q.trim()}%`;
     conditions.push(

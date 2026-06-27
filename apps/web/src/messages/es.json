@@ -155,6 +155,10 @@
     "downloadPdf": "Descargar PDF",
     "sourceQuotation": "Desde cotización #{number}",
     "viewQuotation": "Ver cotización",
+    "fromQuotation": "Crear desde cotización",
+    "fromQuotationHelp": "Selecciona una cotización pendiente para precargar la factura.",
+    "fromQuotationEmpty": "No hay cotizaciones pendientes por facturar.",
+    "fromQuotationNone": "Ninguna (empezar desde cero)",
     "fields": {
       "invoiceNumber": "Número",
       "customer": "Cliente",

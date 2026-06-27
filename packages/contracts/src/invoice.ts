@@ -23,6 +23,11 @@ export const invoiceHeaderSchema = z.object({
   notes: z.string().trim().max(5000).optional().or(z.literal('').transform(() => undefined)),
   terms: z.string().trim().max(5000).optional().or(z.literal('').transform(() => undefined)),
   currency: z.string().trim().length(3).default('DOP'),
+  quotation_id: z
+    .string()
+    .uuid()
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
 });
 
 export const invoiceSchema = invoiceHeaderSchema.extend({

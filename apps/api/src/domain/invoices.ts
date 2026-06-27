@@ -17,6 +17,8 @@ import {
 } from '../lib/errors';
 import type { Ctx } from '../middleware/auth';
 
+const QUOTATION_STATUSES_NOT_INVOICEABLE = new Set(['rejected', 'expired']);
+
 function computeDocTotals(items: InvoiceInput['items']) {
   return calculateTotals(
     items.map((i) => ({
@@ -46,12 +48,40 @@ export async function createInvoice(
   const totals = computeDocTotals(input.items);
   const invoiceNumber = await nextInvoiceNumber(ctx.businessId);
 
+  if (input.quotation_id) {
+    const rows = await db
+      .select({
+        status: quotations.status,
+        convertedInvoiceId: quotations.convertedInvoiceId,
+      })
+      .from(quotations)
+      .where(
+        and(
+          eq(quotations.id, input.quotation_id),
+          eq(quotations.businessId, ctx.businessId),
+          isNull(quotations.deletedAt),
+        ),
+      )
+      .limit(1);
+    const q = rows[0];
+    if (!q) throw notFoundError('Quotation not found');
+    if (q.convertedInvoiceId) {
+      throw conflictError('This quotation has already been converted.');
+    }
+    if (QUOTATION_STATUSES_NOT_INVOICEABLE.has(q.status)) {
+      throw validationError(
+        'Rejected or expired quotations cannot be invoiced.',
+      );
+    }
+  }
+
   return await db.transaction(async (tx) => {
     const [header] = await tx
       .insert(invoices)
       .values({
         businessId: ctx.businessId,
         customerId: input.customer_id,
+        quotationId: input.quotation_id ?? null,
         invoiceNumber,
         issueDate: input.issue_date,
         dueDate: input.due_date ?? null,
@@ -85,6 +115,19 @@ export async function createInvoice(
         sortOrder: idx,
       })),
     );
+
+    if (input.quotation_id) {
+      await tx
+        .update(quotations)
+        .set({ convertedInvoiceId: header.id })
+        .where(
+          and(
+            eq(quotations.id, input.quotation_id),
+            eq(quotations.businessId, ctx.businessId),
+            isNull(quotations.convertedInvoiceId),
+          ),
+        );
+    }
 
     return { id: header.id, invoice_number: invoiceNumber };
   });

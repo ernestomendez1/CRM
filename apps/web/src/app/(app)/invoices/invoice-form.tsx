@@ -36,6 +36,7 @@ type Props = {
     terms?: string;
     items?: LineItemRow[];
   };
+  quotationId?: string;
   action: (
     prev: InvoiceActionResult | null,
     formData: FormData,
@@ -50,6 +51,7 @@ export function InvoiceForm({
   currency,
   locale,
   defaults,
+  quotationId,
   action,
 }: Props) {
   const t = useTranslations('invoices');
@@ -71,6 +73,9 @@ export function InvoiceForm({
 
   return (
     <form action={formAction} className="space-y-6">
+      {quotationId && (
+        <input type="hidden" name="quotation_id" value={quotationId} />
+      )}
       <div className="grid gap-4 sm:grid-cols-2 max-w-4xl">
         <div className="space-y-1.5">
           <Label htmlFor="customer_id">{t('fields.customer')} *</Label>

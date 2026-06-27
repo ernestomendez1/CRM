@@ -155,6 +155,10 @@
     "downloadPdf": "Download PDF",
     "sourceQuotation": "From quotation #{number}",
     "viewQuotation": "View quotation",
+    "fromQuotation": "Create from quotation",
+    "fromQuotationHelp": "Pick a pending quotation to prefill the invoice.",
+    "fromQuotationEmpty": "No pending quotations to invoice.",
+    "fromQuotationNone": "None (start from scratch)",
     "fields": {
       "invoiceNumber": "Number",
       "customer": "Customer",

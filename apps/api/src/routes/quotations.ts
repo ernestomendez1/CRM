@@ -26,8 +26,15 @@ route.get('/', async (c) => {
       : undefined;
   const page = Math.max(1, Number(url.searchParams.get('page') ?? '1'));
   const size = Math.min(100, Math.max(1, Number(url.searchParams.get('size') ?? '25')));
+  const availableForInvoice = url.searchParams.get('available_for_invoice') === 'true';
 
-  const result = await listQuotations(ctx, { q, status, page, size });
+  const result = await listQuotations(ctx, {
+    q,
+    status,
+    page,
+    size,
+    availableForInvoice,
+  });
   return ok(c, { ...result, page, size });
 });
 
