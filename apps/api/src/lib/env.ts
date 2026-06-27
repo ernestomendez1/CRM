@@ -18,5 +18,12 @@ export const env = {
   OPENAI_API_KEY: optional('OPENAI_API_KEY'),
   OPENAI_EXPENSE_MODEL: optional('OPENAI_EXPENSE_MODEL', 'gpt-4o'),
   OPENAI_ASSISTANT_MODEL: optional('OPENAI_ASSISTANT_MODEL', 'gpt-4o'),
+  // Anti-bot for /v1/public/leads. When unset, verification passes (dev mode).
+  TURNSTILE_SECRET: optional('TURNSTILE_SECRET'),
+  // Email transactional. When unset, sendEmail is a no-op (Step 3 hooks
+  // these up; until then admin checks the /admin/leads queue manually).
+  RESEND_API_KEY: optional('RESEND_API_KEY'),
+  EMAIL_FROM: optional('EMAIL_FROM'),
+  EMAIL_ADMIN_ALERTS: optional('EMAIL_ADMIN_ALERTS'),
   PORT: Number(process.env.PORT ?? 8080),
 };

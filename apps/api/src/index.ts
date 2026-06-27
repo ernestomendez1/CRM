@@ -7,6 +7,7 @@ import { authMiddleware, type AuthEnv, getCtx } from './middleware/auth';
 import { ok } from './lib/responses';
 import { adminRoute } from './routes/admin';
 import { assistantRoute } from './routes/assistant';
+import { publicRoute } from './routes/public';
 import { customersRoute } from './routes/customers';
 import { expensesRoute } from './routes/expenses';
 import { invoicesRoute } from './routes/invoices';
@@ -23,8 +24,9 @@ app.get('/healthz', (c) =>
   c.json({ ok: true, service: 'api', ts: new Date().toISOString() }),
 );
 
-// Admin routes (staff-gated) must be mounted BEFORE the /v1 catchall
-// so they aren't intercepted by the authMiddleware on v1.
+// Public + admin routes mounted BEFORE the /v1 catchall so they aren't
+// intercepted by the authMiddleware on v1.
+app.route('/v1/public', publicRoute);
 app.route('/v1/admin', adminRoute);
 
 // Authenticated routes mounted under /v1 (business members)

@@ -1,8 +1,18 @@
 import { Hono } from 'hono';
-import { and, count, eq, gt, isNotNull, lt } from 'drizzle-orm';
+import { count, eq } from 'drizzle-orm';
 import { businesses, leads } from '@crm/db/schema';
+import {
+  leadStatuses,
+  leadStatusUpdateSchema,
+} from '@crm/contracts/lead';
+import {
+  getLead,
+  listLeads,
+  updateLeadStatus,
+} from '../domain/leads';
 import { getDb } from '../lib/db';
-import { ok } from '../lib/responses';
+import { validationError } from '../lib/errors';
+import { noContent, ok } from '../lib/responses';
 import { getStaff, staffMiddleware, type StaffEnv } from '../middleware/staff';
 
 const route = new Hono<StaffEnv>();
@@ -48,6 +58,43 @@ route.get('/stats', async (c) => {
     businessesActive: businessesActive[0]?.value ?? 0,
     businessesPastDue: businessesPastDue[0]?.value ?? 0,
   });
+});
+
+// ---- Leads ------------------------------------------------------------
+
+route.get('/leads', async (c) => {
+  const url = new URL(c.req.url);
+  const statusParam = url.searchParams.get('status');
+  const status = leadStatuses.includes(statusParam as never)
+    ? (statusParam as (typeof leadStatuses)[number])
+    : undefined;
+  const q = url.searchParams.get('q') ?? undefined;
+  const page = Math.max(1, Number(url.searchParams.get('page') ?? '1'));
+  const size = Math.min(100, Math.max(1, Number(url.searchParams.get('size') ?? '25')));
+
+  const result = await listLeads({ status, q, page, size });
+  return ok(c, { ...result, page, size });
+});
+
+route.get('/leads/:id', async (c) => {
+  const id = c.req.param('id');
+  const row = await getLead(id);
+  return ok(c, row);
+});
+
+route.patch('/leads/:id', async (c) => {
+  const staff = getStaff(c);
+  const id = c.req.param('id');
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = leadStatusUpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    throw validationError(
+      'Validation failed',
+      parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    );
+  }
+  await updateLeadStatus(id, parsed.data, staff.userId);
+  return noContent(c);
 });
 
 export { route as adminRoute };

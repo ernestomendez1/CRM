@@ -1,10 +1,24 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-const PUBLIC_PATHS = ['/login', '/auth/callback', '/no-business'];
+const PUBLIC_PATHS = [
+  '/',
+  '/login',
+  '/auth/callback',
+  '/no-business',
+  '/solicitar-acceso',
+];
+
+const MARKETING_PATHS = ['/', '/solicitar-acceso'];
 
 function isPublic(pathname: string) {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+function isMarketingRoot(pathname: string) {
+  return MARKETING_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
 }
 
 export async function proxy(request: NextRequest) {
@@ -52,7 +66,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && pathname === '/login') {
+  // Authenticated users skip marketing pages and go straight to the app.
+  if (user && (pathname === '/login' || isMarketingRoot(pathname))) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     url.searchParams.delete('next');

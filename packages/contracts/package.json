@@ -12,7 +12,8 @@
     "./quotation": "./src/quotation.ts",
     "./expense": "./src/expense.ts",
     "./payment": "./src/payment.ts",
-    "./settings": "./src/settings.ts"
+    "./settings": "./src/settings.ts",
+    "./lead": "./src/lead.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

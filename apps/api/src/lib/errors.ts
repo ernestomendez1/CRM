@@ -1,7 +1,7 @@
 import { ZodError } from 'zod';
 import type { FieldErrors } from './responses';
 
-type AppErrorStatus = 400 | 401 | 403 | 404 | 409 | 422 | 500;
+type AppErrorStatus = 400 | 401 | 402 | 403 | 404 | 409 | 422 | 429 | 500;
 
 export class AppError extends Error {
   constructor(
