@@ -98,7 +98,7 @@ export function InvoicePDF({ business, customer, invoice, items, labels }: Invoi
 
         <View style={s.customerBlock}>
           <Text style={s.sectionLabel}>{labels.billTo}</Text>
-          <Text style={{ fontWeight: 700 }}>{customer.company_name ?? customer.name}</Text>
+          <Text style={{ fontWeight: 700 }}>{customer.company_name || customer.name}</Text>
           {customer.company_name && customer.name && (
             <Text style={s.muted}>{customer.name}</Text>
           )}

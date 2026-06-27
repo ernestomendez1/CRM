@@ -122,7 +122,7 @@ export default async function QuotationsPage(props: PageProps<'/quotations'>) {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    {r.customer?.company_name ?? r.customer?.name ?? '—'}
+                    {r.customer?.company_name || r.customer?.name || '—'}
                   </TableCell>
                   <TableCell>{r.issue_date}</TableCell>
                   <TableCell>{r.expiry_date ?? '—'}</TableCell>

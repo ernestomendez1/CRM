@@ -92,7 +92,7 @@ export function QuotationPDF({ business, customer, quotation, items, labels }: Q
         {/* Customer */}
         <View style={s.customerBlock}>
           <Text style={s.sectionLabel}>{labels.billTo}</Text>
-          <Text style={{ fontWeight: 700 }}>{customer.company_name ?? customer.name}</Text>
+          <Text style={{ fontWeight: 700 }}>{customer.company_name || customer.name}</Text>
           {customer.company_name && customer.name && (
             <Text style={s.muted}>{customer.name}</Text>
           )}

@@ -86,10 +86,10 @@ export default async function CustomersPage(props: PageProps<'/customers'>) {
                       {c.name}
                     </Link>
                   </TableCell>
-                  <TableCell>{c.company_name ?? '—'}</TableCell>
-                  <TableCell>{c.tax_id ?? '—'}</TableCell>
-                  <TableCell>{c.email ?? '—'}</TableCell>
-                  <TableCell>{c.phone ?? '—'}</TableCell>
+                  <TableCell>{c.company_name || '—'}</TableCell>
+                  <TableCell>{c.tax_id || '—'}</TableCell>
+                  <TableCell>{c.email || '—'}</TableCell>
+                  <TableCell>{c.phone || '—'}</TableCell>
                   <TableCell className="text-right">
                     <Badge variant={c.is_active ? 'default' : 'secondary'}>
                       {c.is_active ? t('status.active') : t('status.inactive')}

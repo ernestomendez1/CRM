@@ -94,7 +94,7 @@ export default async function InvoiceDetailPage(props: PageProps<'/invoices/[id]
           <CardContent className="space-y-1 py-4 text-sm">
             <p className="text-muted-foreground">{t('fields.customer')}</p>
             <p className="font-medium">
-              {customer.company_name ?? customer.name ?? '—'}
+              {customer.company_name || customer.name || '—'}
             </p>
             {customer.tax_id && (
               <p className="text-xs text-muted-foreground">RNC/Cédula: {customer.tax_id}</p>

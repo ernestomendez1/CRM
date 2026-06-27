@@ -123,7 +123,7 @@ export default async function InvoicesPage(props: PageProps<'/invoices'>) {
                       {r.invoice_number}
                     </Link>
                   </TableCell>
-                  <TableCell>{r.customer?.company_name ?? r.customer?.name ?? '—'}</TableCell>
+                  <TableCell>{r.customer?.company_name || r.customer?.name || '—'}</TableCell>
                   <TableCell>{r.issue_date}</TableCell>
                   <TableCell>{r.due_date ?? '—'}</TableCell>
                   <TableCell className="text-right tabular-nums">
